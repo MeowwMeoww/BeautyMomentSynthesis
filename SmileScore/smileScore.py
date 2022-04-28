@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from keras.models import load_model
 from misc.extract_bbox import *
 from config import *
@@ -5,8 +7,7 @@ import tensorflow as tf
 import cv2
 import numpy as np
 import pandas as pd
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 
 def load_smile_model(model_path):

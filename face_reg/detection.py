@@ -62,7 +62,7 @@ def read_images(root, purpose):
 	if purpose == 'input':
 		labels = [name for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 	if purpose == 'anchor':
-		labels = [path.rsplit('/', 1)[-1] for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
+		labels = [path.replace('\\', '/').rsplit('/', 1)[-1] for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
 	return labels, img_list
 
