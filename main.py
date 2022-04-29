@@ -91,92 +91,40 @@ def parse_args():
 
 
 def main():
-    args = parse_args()
-    start = time.time()
-    
-    print("-----Starting face detection module-----")
-    log = log_init()
-    log = write_log(old_log=log, 
-                    new_message="-----Starting face detection module-----", 
-                    type="string + enter")
+  args = parse_args()
+  finding_names = args.find_person.split()
+  print('People we need to identify:', finding_names)
+  print('Used device: ', config.DEVICE)
 
-    df, input_img, new_log = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
-    log = write_log(old_log=log, 
-                    new_message=new_log, 
-                    type="string + enter")
-    
-    log = write_log(old_log=log, 
-                    new_message=df, 
-                    type="dataframe + enter")
-                    
-    end = time.time()
-    print(f"-----Done face detection. Time since start {end - start}s-----")
-    log = write_log(old_log=log, 
-                    new_message=f"-----Done face detection. Time since start {end - start}s-----", 
-                    type="string + enter")
-                    
-    print("-----Starting face image quality assessment module-----")
-    log = write_log(old_log=log, 
-                    new_message="-----Starting face image quality assessment module-----", 
-                    type="string + enter")
+  input_paths, input_names = return_paths(args.original_dataset_path, 'input')
+  anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
 
+  append_df = []
+  for batch_index in range(len(input_paths)):
+    df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, finding_names)
     df, input_img = FIQA(df, input_img)
-
-    log = write_log(old_log=log, 
-                    new_message=df, 
-                    type="dataframe + enter")
-                    
-    end = time.time()
-    print(f"-----Done face image quality assessment. Time since start {end - start}s-----")
-    log = write_log(old_log=log, 
-                    new_message=f"-----Done face image quality assessment. Time since start {end - start}s-----", 
-                    type="string + enter")
-    print("-----Starting smile score assessment module-----")
-    log = write_log(old_log=log, 
-                    new_message="-----Starting smile score assessment module-----", 
-                    type="string + enter")
-
     smile_model = load_smile_model(CFG_SMILE.MODEL_PATH)
     df, input_img = get_smile_score(df, input_img, smile_model)
+    append_df.append(df)
 
-    if args.visualize_boxes:
-      input_img = visualizing_bounding_boxes(df, input_img)
+    print('Finished batch {}'.format(batch_index + 1))
 
-    log = write_log(old_log=log, 
-                    new_message=df, 
-                    type="dataframe + enter")
-    
-    end = time.time()
-    print(f"-----Done smile score assessment. Time since start {end - start}s-----")
-    log = write_log(old_log=log, 
-                    new_message=f"-----Done smile score assessment. Time since start {end - start}s-----", 
-                    type="string + enter")
-                    
-    print("-----Starting create video-----")
-    log = write_log(old_log=log, 
-                    new_message="-----Starting create video-----", 
-                    type="string + enter")
+  df_final = pd.concat(append_df)
+  df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
+  df_final.reset_index(drop = True)
 
-    make_video(img_list=input_img[:args.number_of_images],
-               output_path=args.output_path,
-               effect_speed=args.effect_speed, 
-               duration=args.duration, 
-               fps=args.fps, 
-               fraction=args.fraction)
+  df_final = df_final.iloc[:args.number_of_images]
+  input_img = read_images(list(df_final['paths']), purpose = 'input')
 
-    end = time.time()
-    print(f"-----Done create video. Time since start {end - start}s-----")
-    log = write_log(old_log=log, 
-                    new_message=f"-----Done create video. Time since start {end - start}s-----", 
-                    type="string + enter")
-                    
-    print("-----DONE-----")
-    log = write_log(old_log=log, 
-                    new_message="-----DONE-----", 
-                    type="string + enter")
-    
-    if args.log:
-        log_final(log)
+  if args.visualize_boxes:
+    input_img = visualizing_bounding_boxes(df_final, input_img)
+
+  make_video(img_list = input_img,
+             output_path = args.output_path,
+             effect_speed = args.effect_speed,
+             duration = args.duration,
+             fps = args.fps,
+             fraction = args.fraction)
 
 
 if __name__ == '__main__':

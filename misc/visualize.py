@@ -5,6 +5,7 @@ from config import *
 
 def drawing_boxes(row, img):
 	row = row[1]
+	print(row)
 
 	img_name = row['filename']
 	fiqa_scores = row['fiqa scores']
@@ -27,33 +28,41 @@ def drawing_boxes(row, img):
 
 		img = cv2.rectangle(img, start_point, end_point, VISUALIZE.BBOX.COLOR, thickness = VISUALIZE.BBOX.THICKNESS)
 
-		text_size, _ = cv2.getTextSize('Face scores : {0:.3g}'.format(face_scores[bbox_index][0]), cv2.FONT_HERSHEY_SIMPLEX, VISUALIZE.NOTATIONS.FONT_SCALE,
+		text_size, _ = cv2.getTextSize('Face: {0:.3g}'.format(face_scores[bbox_index][0]), cv2.FONT_HERSHEY_SIMPLEX, VISUALIZE.NOTATIONS.FONT_SCALE,
 		                               VISUALIZE.NOTATIONS.THICKNESS)
 		text_w, text_h = text_size
 
 		img = cv2.rectangle(img, (start_point[0], start_point[1] - 4 * text_h - 2 * VISUALIZE.NOTATIONS.SPACE),
 		                    (start_point[0] + text_w + VISUALIZE.BACKGROUND.WIDTH_EXTENSION, start_point[1] - VISUALIZE.NOTATIONS.SPACE), VISUALIZE.BACKGROUND.COLOR, -1)
 
-		img = cv2.putText(img, text = 'Face scores : {0:.3g}'.format(face_scores[bbox_index][0]),
+		img = cv2.putText(img, text = 'Face: {0:.3g}'.format(face_scores[bbox_index][0]),
 		                  org = (start_point[0], start_point[1] - 3 * VISUALIZE.NOTATIONS.SPACE),
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
-		img = cv2.putText(img, text = 'FIQA scores : {0:.3g}'.format(fiqa_scores[bbox_index][0]),
+		img = cv2.putText(img, text = 'FIQA: {0:.3g}'.format(fiqa_scores[bbox_index][0]),
 		                  org = (start_point[0], start_point[1] - 2 * VISUALIZE.NOTATIONS.SPACE),
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
-		img = cv2.putText(img, text = 'Smile scores : {0:.3g}'.format(smile_scores[bbox_index][0]),
+		img = cv2.putText(img, text = 'Smile: {0:.3g}'.format(smile_scores[bbox_index][0]),
 		                  org = (start_point[0], start_point[1] - VISUALIZE.NOTATIONS.SPACE),
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
-		img = cv2.putText(img, text = 'Name : {}'.format(ids[bbox_index][0]), org = (start_point[0], start_point[1] - 4 * VISUALIZE.NOTATIONS.SPACE),
+		img = cv2.putText(img, text = '{}'.format(ids[bbox_index][0]), org = (start_point[0], start_point[1] - 4 * VISUALIZE.NOTATIONS.SPACE),
 		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
 		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
 	return img
+
+
+def visualizing_bounding_boxes(df, img_list):
+	print(list(df.iterrows()))
+	img_list = list(map(drawing_boxes, list(df.iterrows()), img_list))
+	img_list = np.array(img_list)
+
+	return img_list
 
 
 def visualizing_bounding_boxes(df, img_list):

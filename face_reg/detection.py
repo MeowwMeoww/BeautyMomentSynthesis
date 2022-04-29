@@ -49,22 +49,31 @@ def resize_images(img_list, purpose, fraction = 1):
 	return img_list
 
 
-def read_images(root, purpose):
+def return_paths(root, purpose, batch_size = 32):
 	all_paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
-	img_list = list(map(read_image_from_path, all_paths))
-	shape_check = all(img_list[i].shape == img_list[0].shape for i in range(len(img_list)))
+	paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
+	if purpose == 'input':
+		labels = [path.replace('\\', '/').rsplit('/')[-1] for path in paths]
+
+		labels = [labels[x:x + batch_size] for x in range(0, len(labels), batch_size)]
+		paths = [paths[x:x + batch_size] for x in range(0, len(paths), batch_size)]
+
+	elif purpose == 'anchor':
+		labels = [path.replace('\\', '/').rsplit('/')[-2] for path in paths]
+
+	return paths, labels
+
+
+def read_images(paths, purpose):
+	img_list = list(map(read_image_from_path, paths))
+	shape_check = all(img_list[i].shape == img_list[0].shape for i in range(len(img_list)))
 	if shape_check:
 		img_list = np.array(img_list)
 	else:
 		img_list = resize_images(img_list, purpose)
 
-	if purpose == 'input':
-		labels = [name for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
-	if purpose == 'anchor':
-		labels = [path.replace('\\', '/').rsplit('/', 1)[-1] for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
-
-	return labels, img_list
+	return img_list
 
 
 def create_facenet_models():
@@ -89,7 +98,6 @@ def create_facenet_models():
 """
 
 	device = config.DEVICE
-	print('Used device: {}'.format(device))
 	infer_model = InceptionResnetV1(pretrained = 'vggface2', device = device).eval()
 
 	mtcnn = MTCNN(
@@ -97,11 +105,6 @@ def create_facenet_models():
 		thresholds = [0.7, 0.7, 0.8], post_process = False,
 		device = device, selection_method = 'largest_over_threshold'
 	)
-
-	if mtcnn is not None and infer_model is not None:
-		print('Successfully create a MTCNN + InceptionResnet model base')
-	else:
-		print('Fail to create a MTCNN + InceptionResnet model base')
 
 	mtcnn.keep_all = False
 
@@ -291,13 +294,15 @@ def transform(img):
 	return normalized(img)
 
 
-def filter_images(name, img_list, boxes):
+def filter_images(name, img_list, boxes, paths):
 	keep_index = [i for i, x in enumerate(boxes) if x[0] != [None]]
 
 	img_final = [img_list[i] for i in keep_index]
+	paths_final = [paths[i] for i in keep_index]
 	box_list_final = [boxes[i] for i in keep_index]
 	name_final = [name[i] for i in keep_index]
-	return np.array(img_final), box_list_final, name_final
+
+	return np.array(img_final), box_list_final, name_final, paths_final
 
 
 def clipping_boxes(img_list, boxes):
@@ -356,7 +361,7 @@ def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, pu
 		target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
 
 		target_img = cv2.resize(target_img, tuple(CFG_REG.CROP.FACE_SIZE),
-		                        interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
+														interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
 		return np.array(target_img).astype('int16')
 
@@ -436,7 +441,7 @@ def get_neighbors(train, test_row, num_neighbors):
 	euclidean_distances = list(map(euclidean_distance, test_rows, train))
 	euclidean_distance_index = euclidean_distances.copy()
 	euclidean_distance_index = sorted(range(len(euclidean_distance_index)),
-	                                  key = lambda tup: euclidean_distance_index[tup])
+									                        key = lambda tup: euclidean_distance_index[tup])
 	euclidean_distances.sort(key = lambda tup: tup[0])
 	neighbors = list()
 	cosine_scores = list()
@@ -491,7 +496,7 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
 	predicted_ids, predicted_scores = map(list, zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed,
-	                                                                      CFG_REG.KNN.NUM_NEIGHBORS) for embed in input_embed]))
+																		  CFG_REG.KNN.NUM_NEIGHBORS) for embed in input_embed]))
 	# list comprehension returns multiple lists
 
 	return predicted_ids, predicted_scores
@@ -533,7 +538,7 @@ def check_duplicates_ids(ids_list, scores_list, bbox_list):
 	return cleared_bbox, cleared_scores, cleared_ids
 
 
-def clear_results(images, scores, img_names, boxes, ids, person = None):
+def clear_results(images, scores, img_names, boxes, ids, paths, person = None):
 	keep_img = list()
 
 	if person:
@@ -562,16 +567,16 @@ def clear_results(images, scores, img_names, boxes, ids, person = None):
 	new_ids = list(filter(None, ids))
 
 	new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
-
-	df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores})
-	df_new = df_new.reset_index(drop = True)
-
 	images = [images[i] for i in keep_img]
+	paths = [paths[i] for i in keep_img]
+
+	df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores, 'paths': paths})
+	df_new = df_new.reset_index(drop = True)
 
 	return df_new, np.array(images)
 
 
-def face_detection(original_path, anchor_path, finding_name):
+def face_detection(input_paths, input_names, anchor_paths, anchor_labels, finding_name):
 	"""
 	This function performs face detection in the given image dataset.
 
@@ -593,12 +598,9 @@ def face_detection(original_path, anchor_path, finding_name):
 
 	+ input_img: np.ndarray.
 	"""
-	finding_name = finding_name.split()
-	print('People we need to identify:', finding_name)
-	log = 'People we need to identify:' + str(finding_name)
 
-	input_name, input_img = read_images(original_path, purpose = 'input')
-	anchor_label, anchor_img = read_images(anchor_path, purpose = 'anchor')
+	input_img = read_images(input_paths, purpose = 'input')
+	anchor_img = read_images(anchor_paths, purpose = 'anchor')
 
 	mtcnn, infer_model = create_facenet_models()
 
@@ -608,8 +610,8 @@ def face_detection(original_path, anchor_path, finding_name):
 	input_boxes = clipping_boxes(input_img, input_boxes)
 	anchor_boxes = clipping_boxes(anchor_img, anchor_boxes)
 
-	input_img, input_boxes, input_name = filter_images(input_name, input_img, input_boxes)
-	anchor_img, anchor_boxes, anchor_label = filter_images(anchor_label, anchor_img, anchor_boxes)
+	input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
+	anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
 
 	cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
 	cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
@@ -619,7 +621,7 @@ def face_detection(original_path, anchor_path, finding_name):
 
 	final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-	df, input_img = clear_results(images = input_img, img_names = input_name, scores = final_scores,
-	                              boxes = input_boxes, ids = final_ids, person = finding_name)
+	df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
+																boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
 
-	return df, input_img, log
+	return df, input_img

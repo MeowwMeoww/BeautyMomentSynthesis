@@ -7,7 +7,7 @@ import tensorflow as tf
 import cv2
 import numpy as np
 import pandas as pd
-
+from deepface import DeepFace
 
 
 def load_smile_model(model_path):
@@ -26,8 +26,8 @@ def get_smile_score(df, img_list, model):
   for i in range(len(df)):
     input_data = get_target_bbox(img_list[i], df["bboxes"][i], p = CFG_FIQA.EXTEND_RATE)
     scores = []
-    for j in input_data:
-      img = cv2.resize(j, (139, 139))
+    for img in input_data:
+      img = cv2.resize(img, (139, 139))
       img = np.reshape(img, [1, 139, 139, 3])
       predictions = model.predict(img)
       scores.append(predictions[0][0] * 100)
