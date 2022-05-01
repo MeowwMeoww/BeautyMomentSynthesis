@@ -91,6 +91,7 @@ def parse_args():
 
 
 def main():
+  start = time.time()
   args = parse_args()
   finding_names = args.find_person.split()
   print('People we need to identify:', finding_names)
@@ -99,15 +100,24 @@ def main():
   input_paths, input_names = return_paths(args.original_dataset_path, 'input')
   anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
 
+  mtcnn, infer_model = create_facenet_models()
+  fiqa_net = FIQA_network()
+
+  if fiqa_net and mtcnn and infer_model is not None:
+    print('Initializing FIQA and FaceNet models')
+  else:
+    raise Exception('Failed to create FIQA + FaceNet models')
+
   append_df = []
   for batch_index in range(len(input_paths)):
-    df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, finding_names)
-    df, input_img = FIQA(df, input_img)
-    smile_model = load_smile_model(CFG_SMILE.MODEL_PATH)
-    df, input_img = get_smile_score(df, input_img, smile_model)
+    df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+    df, input_img = FIQA(df, input_img, fiqa_net)
+    df, input_img = get_smile_score(df, input_img)
     append_df.append(df)
 
+    end = time.time()
     print('Finished batch {}'.format(batch_index + 1))
+    print('Time since start: ', start-end)
 
   df_final = pd.concat(append_df)
   df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
@@ -126,6 +136,9 @@ def main():
              fps = args.fps,
              fraction = args.fraction)
 
+  end = time.time()
+  print('Done creating video')
+  print('Total time: ', start-end)
 
 if __name__ == '__main__':
     main()

@@ -576,7 +576,7 @@ def clear_results(images, scores, img_names, boxes, ids, paths, person = None):
 	return df_new, np.array(images)
 
 
-def face_detection(input_paths, input_names, anchor_paths, anchor_labels, finding_name):
+def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn, infer_model, finding_name):
 	"""
 	This function performs face detection in the given image dataset.
 

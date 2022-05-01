@@ -10,15 +10,7 @@ import pandas as pd
 from deepface import DeepFace
 
 
-def load_smile_model(model_path):
-  model = load_model(model_path)
-  model.compile(optimizer = tf.keras.optimizers.Adam(0.0001),
-                loss = 'categorical_crossentropy',
-                metrics = ['accuracy'])
-  return model
-
-
-def get_smile_score(df, img_list, model):
+def get_smile_score(df, img_list):
   smile_score_avg = []
   final_img = []
   smile_scores = []
@@ -26,11 +18,9 @@ def get_smile_score(df, img_list, model):
   for i in range(len(df)):
     input_data = get_target_bbox(img_list[i], df["bboxes"][i], p = CFG_FIQA.EXTEND_RATE)
     scores = []
-    for img in input_data:
-      img = cv2.resize(img, (139, 139))
-      img = np.reshape(img, [1, 139, 139, 3])
-      predictions = model.predict(img)
-      scores.append(predictions[0][0] * 100)
+    for cropped_face in input_data:
+      predictions = DeepFace.analyze(cropped_face, enforce_detection = False)
+      scores.append(predictions['emotion']['happy'])
 
     smile_scores.append([[score] for score in scores])
     smile_score_avg.append(sum(scores) / len(scores))

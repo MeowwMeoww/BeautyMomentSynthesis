@@ -29,7 +29,9 @@ def process_fiqa_image(img):
     return data
 
 
-def network(model_path, device):
+def FIQA_network():
+    model_path  = CFG_FIQA.MODEL_PATH
+    device = config.DEVICE
     net = model.R50([112, 112], use_type="Qua").to(device)
     net_dict = net.state_dict()
     data_dict = {
@@ -41,8 +43,7 @@ def network(model_path, device):
     return net
 
 
-def FIQA(df, img_list):
-    net = network(model_path, device)
+def FIQA(df, img_list, net):
     fiqa_scores = []
     keep_index = []
 

@@ -10,7 +10,7 @@ config.DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 CFG_FIQA = edict()
 CFG_FIQA.THRESHOLD = 40
 CFG_FIQA.MODEL_PATH = 'model/SDD_FIQA_checkpoints_r50.pth'
-CFG_FIQA.EXTEND_RATE = 0.15
+CFG_FIQA.EXTEND_RATE = 0.4
 
 
 CFG_REG = edict()
@@ -22,7 +22,7 @@ CFG_REG.KNN.NUM_NEIGHBORS = 5
 
 CFG_REG.CROP = edict()
 CFG_REG.CROP.FACE_SIZE = (240, 300)
-CFG_REG.CROP.EXTEND_RATE = 0
+CFG_REG.CROP.EXTEND_RATE = 0.2
 
 
 CFG_SMILE = edict()
