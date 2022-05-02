@@ -117,7 +117,7 @@ def main():
 
     end = time.time()
     print('Finished batch {}'.format(batch_index + 1))
-    print('Time since start: ', start-end)
+    print('Time since start: ', end-start)
 
   df_final = pd.concat(append_df)
   df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
@@ -138,7 +138,7 @@ def main():
 
   end = time.time()
   print('Done creating video')
-  print('Total time: ', start-end)
+  print('Total time: ', end-start)
 
 if __name__ == '__main__':
     main()
