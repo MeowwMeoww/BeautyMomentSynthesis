@@ -5,7 +5,6 @@ from config import *
 
 def drawing_boxes(row, img):
 	row = row[1]
-	print(row)
 
 	img_name = row['filename']
 	fiqa_scores = row['fiqa scores']
