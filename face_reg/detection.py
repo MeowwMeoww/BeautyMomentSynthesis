@@ -49,7 +49,7 @@ def resize_images(img_list, purpose, fraction = 1):
 	return img_list
 
 
-def return_paths(root, purpose, batch_size = 32):
+def return_paths(root, purpose, batch_size = 128):
 	all_paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 	paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 

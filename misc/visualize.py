@@ -14,8 +14,8 @@ def drawing_boxes(row, img):
 	ids = row['ids']
 
 	img = cv2.putText(img, text = 'Image name: {}'.format(img_name), org = tuple(VISUALIZE.HEADER.ORG),
-	                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.HEADER.FONT_SCALE,
-	                  color = VISUALIZE.HEADER.COLOR, thickness = VISUALIZE.HEADER.THICKNESS, lineType = cv2.LINE_AA)
+					  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.HEADER.FONT_SCALE,
+					  color = VISUALIZE.HEADER.COLOR, thickness = VISUALIZE.HEADER.THICKNESS, lineType = cv2.LINE_AA)
 
 	for bbox_index in range(len(bboxes)):
 		current_box = bboxes[bbox_index]
@@ -28,30 +28,31 @@ def drawing_boxes(row, img):
 		img = cv2.rectangle(img, start_point, end_point, VISUALIZE.BBOX.COLOR, thickness = VISUALIZE.BBOX.THICKNESS)
 
 		text_size, _ = cv2.getTextSize('Face: {0:.3g}'.format(face_scores[bbox_index][0]), cv2.FONT_HERSHEY_SIMPLEX, VISUALIZE.NOTATIONS.FONT_SCALE,
-		                               VISUALIZE.NOTATIONS.THICKNESS)
+									   VISUALIZE.NOTATIONS.THICKNESS)
+
 		text_w, text_h = text_size
 
 		img = cv2.rectangle(img, (start_point[0], start_point[1] - 4 * text_h - 2 * VISUALIZE.NOTATIONS.SPACE),
-		                    (start_point[0] + text_w + VISUALIZE.BACKGROUND.WIDTH_EXTENSION, start_point[1] - VISUALIZE.NOTATIONS.SPACE), VISUALIZE.BACKGROUND.COLOR, -1)
+							(start_point[0] + text_w + VISUALIZE.BACKGROUND.WIDTH_EXTENSION, start_point[1] - VISUALIZE.NOTATIONS.SPACE), VISUALIZE.BACKGROUND.COLOR, -1)
 
 		img = cv2.putText(img, text = 'Face: {0:.3g}'.format(face_scores[bbox_index][0]),
-		                  org = (start_point[0], start_point[1] - 3 * VISUALIZE.NOTATIONS.SPACE),
-		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
-		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
+						  org = (start_point[0], start_point[1] - 3 * VISUALIZE.NOTATIONS.SPACE),
+						  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
+						  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
 		img = cv2.putText(img, text = 'FIQA: {0:.3g}'.format(fiqa_scores[bbox_index][0]),
-		                  org = (start_point[0], start_point[1] - 2 * VISUALIZE.NOTATIONS.SPACE),
-		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
-		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
+						  org = (start_point[0], start_point[1] - 2 * VISUALIZE.NOTATIONS.SPACE),
+						  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
+						  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
 		img = cv2.putText(img, text = 'Smile: {0:.3g}'.format(smile_scores[bbox_index][0]),
-		                  org = (start_point[0], start_point[1] - VISUALIZE.NOTATIONS.SPACE),
-		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
-		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
+						  org = (start_point[0], start_point[1] - VISUALIZE.NOTATIONS.SPACE),
+						  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
+						  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
 		img = cv2.putText(img, text = '{}'.format(ids[bbox_index][0]), org = (start_point[0], start_point[1] - 4 * VISUALIZE.NOTATIONS.SPACE),
-		                  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
-		                  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
+						  fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale = VISUALIZE.NOTATIONS.FONT_SCALE, color = VISUALIZE.NOTATIONS.COLOR,
+						  thickness = VISUALIZE.NOTATIONS.THICKNESS, lineType = cv2.LINE_AA)
 
 	return img
 

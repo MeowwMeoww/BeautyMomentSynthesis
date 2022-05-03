@@ -16,10 +16,10 @@ def get_smile_score(df, img_list):
   smile_scores = []
 
   for i in range(len(df)):
-    input_data = get_target_bbox(img_list[i], df["bboxes"][i], p = CFG_FIQA.EXTEND_RATE)
+    input_data = get_target_bbox(img_list[i], df["bboxes"][i], p = CFG_REG.CROP.EXTEND_RATE)
     scores = []
     for cropped_face in input_data:
-      predictions = DeepFace.analyze(cropped_face, enforce_detection = False)
+      predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], enforce_detection = False)
       scores.append(predictions['emotion']['happy'])
 
     smile_scores.append([[score] for score in scores])
