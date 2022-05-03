@@ -95,7 +95,7 @@ def create_facenet_models():
 	>> model_A = create_mtcnn_model()
 	>> model_A.image_size = 200
 	>> model_A.min_face_size = 10
-"""
+	"""
 
 	device = config.DEVICE
 	infer_model = InceptionResnetV1(pretrained = 'vggface2', device = device).eval()
@@ -113,51 +113,51 @@ def create_facenet_models():
 
 def get_bounding_box(mtcnn_model, frames, batch_size = 32):
 	"""
-This function detects human faces in the given batch of images / video frames
-in the Python Numpy Array format. It will return 3 lists - bounding box coordinates
-list, confidence score list, and facial landmarks list. See details on Return section.
+	This function detects human faces in the given batch of images / video frames
+	in the Python Numpy Array format. It will return 3 lists - bounding box coordinates
+	list, confidence score list, and facial landmarks list. See details on Return section.
 
-To save GPU's memory, this function will detect faces in
-separate mini-batches. It has been shown that mini-batched detection has the
-same efficiency as full-batched detection.
+	To save GPU's memory, this function will detect faces in
+	separate mini-batches. It has been shown that mini-batched detection has the
+	same efficiency as full-batched detection.
 
-For each detected face, the function will return:
-* 4 bounding box coordinates (x left, y top, x right, y bot)
-* 1 confidence score for that bounding box.
-* 5 landmarks - marking that person's eyes, nose, and mouth.
+	For each detected face, the function will return:
+	* 4 bounding box coordinates (x left, y top, x right, y bot)
+	* 1 confidence score for that bounding box.
+	* 5 landmarks - marking that person's eyes, nose, and mouth.
 
-Parameters
-----------
-+ mtcnn_model: a facenet_pytorch.models.mtcnn.MTCNN model.
-		Passing a MTCNN model base that has been created beforehand.
+	Parameters
+	----------
+	+ mtcnn_model: a facenet_pytorch.models.mtcnn.MTCNN model.
+			Passing a MTCNN model base that has been created beforehand.
 
-+ frames: np.ndarray.
-		Given batch of images to detect human faces. Must be a Numpy Array that
-		has 4D shape.
-		--> The ideal shape should be:
-		(number_of_samples, image_width, image_height, channels)
+	+ frames: np.ndarray.
+			Given batch of images to detect human faces. Must be a Numpy Array that
+			has 4D shape.
+			--> The ideal shape should be:
+			(number_of_samples, image_width, image_height, channels)
 
-		All images in the Frames must be of equal size, and has all pixel values
-		in scale [0-255].
-		All images must have 3 color channels (RGB-formatted images).
+			All images in the Frames must be of equal size, and has all pixel values
+			in scale [0-255].
+			All images must have 3 color channels (RGB-formatted images).
 
-+ batch_size: int > 0, optional, default is 32.
-		The size of the mini-batch. The larger the batch size, the more GPU memory
-		needed for detection.
+	+ batch_size: int > 0, optional, default is 32.
+			The size of the mini-batch. The larger the batch size, the more GPU memory
+			needed for detection.
 
-Return
-----------
-+ bboxes_pred_list: list .
-		The list that contains all the predicted bounding boxes in the OpenCV format
-		[x_left, y_top, x_right, y_bot]
+	Return
+	----------
+	+ bboxes_pred_list: list .
+			The list that contains all the predicted bounding boxes in the OpenCV format
+			[x_left, y_top, x_right, y_bot]
 
-+ box_probs_list: list .
-		The list that contains the confidence scores for all predicted bounding
-		boxes.
+	+ box_probs_list: list .
+			The list that contains the confidence scores for all predicted bounding
+			boxes.
 
-+ landmark_list: list .
-		The list that contains facial landmarks for all predicted bounding boxes/
-"""
+	+ landmark_list: list .
+			The list that contains facial landmarks for all predicted bounding boxes/
+	"""
 
 	assert (type(frames) == np.ndarray and frames.ndim == 4), "Frames must be a 4D np.array"
 	assert (frames.shape[-1] == 3), "All images must have 3 color channels - R, G, and B"
