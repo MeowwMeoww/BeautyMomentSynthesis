@@ -1,40 +1,44 @@
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import tensorflow as tf
 from keras.models import load_model
+from misc.extract_bbox import *
+from config import *
+import tensorflow as tf
 import cv2
 import numpy as np
 import pandas as pd
-from misc.extract_bbox import *
+from deepface import DeepFace
 
 
-def load_smile_model(model_path):
-    model = load_model(model_path)
-    model.compile(optimizer = tf.keras.optimizers.Adam(0.0001), 
-                    loss = 'categorical_crossentropy',
-                    metrics = ['accuracy'])
-    return model
+def get_smile_score(df, img_list):
+	smile_score_avg = []
+	final_img = []
+	smile_scores = []
 
-  
-def get_smile_score(path, df, model):
-    smile_score = []
-    filename = []
-    for i in range(len(df)):
-        if df["bboxes"][i][0] is not None:
-            input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
-            score = []
-            for j in input_data:
-                img = cv2.cvtColor(j, cv2.COLOR_BGR2RGB)
+	for i in range(len(df)):
+		input_data = get_target_bbox(img_list[i], df["bboxes"][i], p = CFG_SMILE.EXTEND_RATE)
+		scores = []
+		for cropped_face in input_data:
+			cropped_face = cropped_face[..., ::-1].copy()
 
-                img = cv2.resize(img, (139, 139))
-                img = np.reshape(img, [1, 139, 139, 3])
+			try:
+				predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], detector_backend = 'mtcnn', enforce_detection = True)
+			except:
+				predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], detector_backend = 'retinaface', enforce_detection = True)
 
-                preditions = model.predict(img)
-                
-                score.append(preditions[0][0]*100)
-            filename.append(os.path.join(path, df["filename"][i]))
-            smile_score.append(sum(score)/len(score))
-    new_df = pd.DataFrame({'filename': filename, 'score': smile_score})
-    sorted_df = new_df.sort_values(by="score", ascending=False)
+			scores.append(predictions['emotion']['happy'])
 
-    return sorted_df
+		smile_scores.append([[score] for score in scores])
+		smile_score_avg.append(sum(scores) / len(scores))
+		final_img.append(img_list[i])
+
+	new_df = df.copy()
+	new_df['smile score average'] = smile_score_avg
+	new_df['smile scores'] = smile_scores
+	new_df.sort_values(by = 'smile score average', ascending = False, inplace = True)
+	old_index = list(new_df.index)
+	final_img = [final_img[i] for i in old_index]
+
+	new_df.reset_index(drop = True)
+	return new_df, np.array(final_img)

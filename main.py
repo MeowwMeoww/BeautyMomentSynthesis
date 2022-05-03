@@ -8,6 +8,10 @@ from face_reg.detection import *
 from SmileScore.smileScore import *
 from animations.make_video import *
 import datetime
+from misc.log import *
+from config import *
+from misc.visualize import *
+
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -66,7 +70,7 @@ def parse_args():
 
     parser.add_argument('--find_person',
                         help='Find the person',
-                        type=str,
+                        type = str,
                         required=False,
                         default=None)
                         
@@ -75,126 +79,66 @@ def parse_args():
                         type=bool,
                         required=False,
                         default=False)
-                        
+
+    parser.add_argument('--visualize_boxes',
+                        help='Visualizing bounding boxes in the video',
+                        type=bool,
+                        required=False,
+                        default=False)
+
     args = parser.parse_args()
     return args
 
 
 def main():
-    args = parse_args()
-    if args.log:
-        now = datetime.datetime.now()
-        f = open(f"{now.year}{now.month}{now.day}_{now.hour}{now.minute}{now.second}_log.txt", "w+")
-        
-        start = time.time()
-        
-        print("-----Starting face detection module-----")
-        f.write("-----Starting face detection module-----\n")
-        
-        df = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
-        
-        f.write(str(list(df["filename"])))
-        f.write("\n")
-        f.write(str(list(df["bboxes"])))
-        f.write("\n")
-        f.write(str(list(df["ids"])))
-        f.write("\n")
-        
-        end = time.time()
-        
-        print(f"-----Done face detection. Time since start {end-start}s-----")
-        f.write(f"-----Done face detection. Time since start {end-start}s-----")
-        f.write("\n")
-        print("-----Starting face image quality assessment module-----")
-        f.write("-----Starting face image quality assessment module-----")
-        f.write("\n")
-        
-        df = FIQA(df=df, path=args.original_dataset_path)
-        
-        f.write(str(list(df["filename"])))
-        f.write("\n")
-        f.write(str(list(df["fiqa_score"])))
-        f.write("\n")
-        
-        end = time.time()
-        
-        print(f"-----Done face image quality assessment. Time since start {end-start}s-----")
-        f.write(f"-----Done face image quality assessment. Time since start {end-start}s-----")
-        f.write("\n")
-        print("-----Starting smile score assessment module-----")
-        f.write("-----Starting smile score assessment module-----")
-        f.write("\n")
-        
-        smile_model = load_smile_model(r"model/smile_score.h5")
-        df = get_smile_score(path=args.original_dataset_path, df=df, model=smile_model)
-        
-        f.write(str(list(df["filename"])))
-        f.write("\n")
-        f.write(str(list(df["score"])))
-        f.write("\n")
-        
-        end = time.time()
-        
-        print(f"-----Done smile score assessment. Time since start {end-start}s-----")
-        f.write(f"-----Done smile score assessment. Time since start {end-start}s-----")
-        f.write("\n")
-        print("-----Starting create video-----")
-        f.write("-----Starting create video-----")
-        f.write("\n")
-        
-        # img_list = process_images_for_vid(list(df["filename"])[0:args.number_of_images], effect_speed=args.effect_speed, duration=args.duration,
-                                          # fps=args.fps, fraction=args.fraction)
-        print(list(df["filename"])[0:args.number_of_images])
-        f.write(str(list(df["filename"])[0:args.number_of_images]))
-        f.write("\n")
-        
-        make_video(img_list=list(df["filename"])[0:args.number_of_images], output_path=args.output_path, 
-                   effect_speed=args.effect_speed, duration=args.duration, fps=args.fps, fraction=args.fraction)
-                   
-        end = time.time()
-        
-        print(f"-----Done create video. Time since start {end-start}s-----")
-        f.write(f"-----Done create video. Time since start {end-start}s-----")
-        f.write("\n")
-        print("-----DONE-----")
-        f.write("-----DONE-----")
-        f.close()
-        
-    else:
-        start = time.time()
-        print("-----Starting face detection module-----")
-        
-        df = face_detection(args.original_dataset_path, args.anchor_dataset_path, args.find_person)
-        
-        end = time.time()
-        print(f"-----Done face detection. Time since start {end-start}s-----")
-        print("-----Starting face image quality assessment module-----")
-        
-        df = FIQA(df=df, path=args.original_dataset_path)
-        
-        end = time.time()
-        print(f"-----Done face image quality assessment. Time since start {end-start}s-----")
-        print("-----Starting smile score assessment module-----")
-        
-        smile_model = load_smile_model(r"model/smile_score.h5")
-        df = get_smile_score(path=args.original_dataset_path, df=df, model=smile_model)
-        
-        end = time.time()
-        print(f"-----Done smile score assessment. Time since start {end-start}s-----")
-        print("-----Starting create video-----")
-        
-        # img_list = process_images_for_vid(list(df["filename"])[0:args.number_of_images], effect_speed=args.effect_speed, duration=args.duration,
-                                          # fps=args.fps, fraction=args.fraction)
-                                          
-        print(list(df["filename"])[0:args.number_of_images])
-        
-        make_video(img_list=list(df["filename"])[0:args.number_of_images], output_path=args.output_path, 
-                   effect_speed=args.effect_speed, duration=args.duration, fps=args.fps, fraction=args.fraction)
-                   
-        end = time.time()
-        print(f"-----Done create video. Time since start {end-start}s-----")
-        print("-----DONE-----")
+  start = time.time()
+  args = parse_args()
+  finding_names = args.find_person.split()
+  print('People we need to identify:', finding_names)
+  print('Used device: ', config.DEVICE)
 
+  input_paths, input_names = return_paths(args.original_dataset_path, 'input')
+  anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
+
+  mtcnn, infer_model = create_facenet_models()
+  fiqa_net = FIQA_network()
+
+  if fiqa_net and mtcnn and infer_model is not None:
+    print('Initializing FIQA and FaceNet models')
+  else:
+    raise Exception('Failed to create FIQA + FaceNet models')
+
+  append_df = []
+  for batch_index in range(len(input_paths)):
+    df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+    df, input_img = FIQA(df, input_img, fiqa_net)
+    df, input_img = get_smile_score(df, input_img)
+    append_df.append(df)
+
+    end = time.time()
+    print('Finished batch {}'.format(batch_index + 1))
+    print('Time since start: ', end-start)
+
+  df_final = pd.concat(append_df)
+  df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
+  df_final.reset_index(drop = True)
+
+  df_final = df_final.iloc[:args.number_of_images]
+  input_img = read_images(list(df_final['paths']), purpose = 'input')
+
+  if args.visualize_boxes:
+    input_img = visualizing_bounding_boxes(df_final, input_img)
+
+  make_video(img_list = input_img,
+             output_path = args.output_path,
+             effect_speed = args.effect_speed,
+             duration = args.duration,
+             fps = args.fps,
+             fraction = args.fraction)
+
+  end = time.time()
+  print('Done creating video')
+  print('Total time: ', end-start)
 
 if __name__ == '__main__':
     main()

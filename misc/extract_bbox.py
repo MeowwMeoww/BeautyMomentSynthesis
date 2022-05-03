@@ -3,30 +3,30 @@ import cv2
 
 def convert_bounding_box(box, input_type, change_to):
     """
-    This function converts an input bounding box to either YOLO, COCO, or OpenCV
-    format.
-    However, the function only converts the input bounding box if it already belongs
-    to one of the three formats listed above.
-    Note:
-    + OpenCV-formatted bounding box has 4 elements [x_left, y_top, x_right, y_bot]
-    + YOLO-formatted bounding box has 4 elements [x_center, y_center, width, height]
-    + COCO-formatted bounding box has 4 elements [x_left, y_top, width, height]
-    Parameters
-    ----------
-    + box : list.
-        The provided bounding box in the Python list format. The given bounding box
-        must have 4 elements, corresponding to its format.
-    + input_type : {'opencv', 'yolo', 'coco'}
-        The format of the input bounding box.
-        Supported values are 'yolo' - for YOLO format, 'coco' - for COCO format,
-        and 'opencv' - for OpenCV format.
-    + change_to : {'opencv', 'yolo', 'coco'}.
-        The type of format to convert the input bounding box to.
-        Supported values are 'yolo' - for YOLO format, 'coco' - for COCO format,
-        and 'opencv' - for OpenCV format.
-    Return
-    ----------
-        Returns a list for the converted bounding box.
+        This function converts an input bounding box to either YOLO, COCO, or OpenCV
+        format.
+        However, the function only converts the input bounding box if it already belongs
+        to one of the three formats listed above.
+        Note:
+        + OpenCV-formatted bounding box has 4 elements [x_left, y_top, x_right, y_bot]
+        + YOLO-formatted bounding box has 4 elements [x_center, y_center, width, height]
+        + COCO-formatted bounding box has 4 elements [x_left, y_top, width, height]
+        Parameters
+        ----------
+        + box: list.
+            The provided bounding box in the Python list format. The given bounding box
+            must have 4 elements, corresponding to its format.
+        + input_type: {'opencv', 'yolo', 'coco'}
+            The format of the input bounding box.
+            Supported values are 'yolo' - for YOLO format, 'coco' - for COCO format,
+            and 'opencv' - for OpenCV format.
+        + change_to: {'opencv', 'yolo', 'coco'}.
+            The type of format to convert the input bounding box to.
+            Supported values are 'yolo' - for YOLO format, 'coco' - for COCO format,
+            and 'opencv' - for OpenCV format.
+        Return
+        ----------
+            Returns a list for the converted bounding box.
     """
     assert (type(box) == list), 'The provided bounding box must be a Python list'
     assert (len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
@@ -84,8 +84,22 @@ def convert_bounding_box(box, input_type, change_to):
             return [x_center, y_center, width, height]
         
         
-def get_target_bbox(img_path, bboxes, p=0.1):
-    img = cv2.imread(img_path)
+def get_target_bbox(img, bboxes, p=0.1):
+    """
+        This function extracts bounding boxes from an image.
+        Parameters
+        ----------
+        + img: numpy array.
+            Values of an image (an array of 3 channels).
+        + bboxes: list.
+            The list of opencv formatted bounding boxes.
+        + p: float.
+            The coefficient that is used to extend the width and height of the bounding box.
+        Return
+        ----------
+            Returns a list of bounding boxes values in the given image.
+    """
+    
     data = []
     for bbox in bboxes:
         bbox = convert_bounding_box(box=bbox, input_type="opencv", change_to="coco")
@@ -102,6 +116,21 @@ def get_target_bbox(img_path, bboxes, p=0.1):
 
 
 def zoom_rescale_bbox(coco_bbox, W, H):
+    """
+        This function returns a new opencv formatted bounding box output that fits the width-height ratio of the initial image.
+        Parameters
+        ----------
+        + coco_bbox: list.
+            List for the initial bounding box.
+        + W: int.
+            The width of the image.
+        + H: int.
+            The height of the image.
+        Return
+        ----------
+            Returns an opencv formatted bounding box.
+    """
+    
     # input: coco_bbox -> output: opencv_bbox
     x, y, w, h = coco_bbox
     x_top, x_bot, y_top, y_bot = convert_bounding_box(box=bbox, input_type="coco", change_to="opencv")

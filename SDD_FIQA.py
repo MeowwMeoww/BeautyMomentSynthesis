@@ -5,12 +5,15 @@ import torchvision.transforms as T
 from PIL import Image
 from misc.extract_bbox import *
 from model import model
+import numpy as np
+import cv2
+from config import *
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model_path = 'model/SDD_FIQA_checkpoints_r50.pth'
+device = config.DEVICE
+model_path = CFG_FIQA.MODEL_PATH
 
 
-def process_fiqa_image(img):  # read image & data pre-process
+def process_fiqa_image(img):
 
     data = torch.randn(1, 3, 112, 112)
 
@@ -26,7 +29,9 @@ def process_fiqa_image(img):  # read image & data pre-process
     return data
 
 
-def network(model_path, device):
+def FIQA_network():
+    model_path  = CFG_FIQA.MODEL_PATH
+    device = config.DEVICE
     net = model.R50([112, 112], use_type="Qua").to(device)
     net_dict = net.state_dict()
     data_dict = {
@@ -38,27 +43,30 @@ def network(model_path, device):
     return net
 
 
-def FIQA(df, path):
-    net = network(model_path, device)
-    fiqa_score = []
-    bbox = []
-    filename = []
+def FIQA(df, img_list, net):
+    fiqa_scores = []
+    keep_index = []
+
     for i in range(len(df)):
-        input_data = get_target_bbox(os.path.join(path, df["filename"][i]), df["bboxes"][i], p=0.15)
-        score = []
+        input_data = get_target_bbox(img_list[i], df["bboxes"][i], p=CFG_FIQA.EXTEND_RATE)
+        scores = []
         for j in input_data:
             if j.shape[0] > 0 and j.shape[1] > 0:
                 img = process_fiqa_image(j).to(device)
                 pred_score = net(img).data.cpu().numpy().squeeze()
-                score.append(pred_score)
-                print(pred_score)
-        try:
-            if max(score) > 40:
-                filename.append(df["filename"][i])
-                bbox.append(df["bboxes"][i])
-                fiqa_score.append(score)
-        except:
-            pass
+                scores.append(pred_score)
+        scores = [score.item() for score in scores]
+        scores_avg = sum(scores)/len(scores)
+    #    if max(scores) > CFG_FIQA.THRESHOLD:
+        if scores_avg >= CFG_FIQA.THRESHOLD:
+            keep_index.append(i)
+            fiqa_scores.append([[score] for score in scores])
 
-    new_df = pd.DataFrame({'filename': filename, 'bboxes': bbox, "fiqa_score": fiqa_score})
-    return new_df
+    new_df = df.iloc[keep_index]
+    new_df['fiqa scores'] = fiqa_scores
+    new_df = new_df.reset_index(drop=True)
+
+    qualified_img = [img_list[index] for index in keep_index]
+    qualified_img = np.array(qualified_img)
+
+    return new_df, qualified_img
