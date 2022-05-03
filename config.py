@@ -27,7 +27,7 @@ CFG_REG.CROP.EXTEND_RATE = 0
 
 CFG_SMILE = edict()
 CFG_SMILE.MODEL_PATH = 'model/smile_score.h5'
-
+CFG_SMILE.EXTEND_RATE = 0.3
 
 VISUALIZE = edict()
 
