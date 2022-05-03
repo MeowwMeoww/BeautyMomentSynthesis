@@ -67,7 +67,7 @@ def return_paths(root, purpose, batch_size = 128):
 
 def read_images(paths, purpose):
 	img_list = list(map(read_image_from_path, paths))
-	shape_check = all(img_list[i].shape == img_list[0].shape for i in range(len(img_list)))
+	shape_check = all(img_list[index].shape == img_list[0].shape for index in range(len(img_list)))
 	if shape_check:
 		img_list = np.array(img_list)
 	else:
@@ -295,17 +295,18 @@ def transform(img):
 
 
 def filter_images(name, img_list, boxes, paths):
-	keep_index = [i for i, x in enumerate(boxes) if x[0] != [None]]
+	keep_index = [index for index, box in enumerate(boxes) if box[0] != [None]]
 
-	img_final = [img_list[i] for i in keep_index]
-	paths_final = [paths[i] for i in keep_index]
-	box_list_final = [boxes[i] for i in keep_index]
-	name_final = [name[i] for i in keep_index]
+	img_final = [img_list[index] for index in keep_index]
+	paths_final = [paths[index] for index in keep_index]
+	box_list_final = [boxes[index] for index in keep_index]
+	name_final = [name[index] for index in keep_index]
 
 	return np.array(img_final), box_list_final, name_final, paths_final
 
 
 def clipping_boxes(img_list, boxes):
+
 	def clipping_method(img, box, format = 'opencv'):
 		if format == 'opencv':
 			x_left, y_top, x_right, y_bot = int(box[0]), int(box[1]), int(box[2]), int(box[3])
@@ -339,11 +340,12 @@ def clipping_boxes(img_list, boxes):
 
 	box_clipping = []
 
-	for i in range(len(img_list)):
-		if len(boxes[i]) >= 1 and boxes[i][0] is not None:
-			img_list_map = np.expand_dims(img_list[i], axis = 0)
-			img_list_map = np.repeat(img_list_map, repeats = len(boxes[i]), axis = 0)
-			box_clipping.append(list(map(clipping_method, img_list_map, boxes[i])))
+	for img_index in range(len(img_list)):
+
+		if len(boxes[img_index]) >= 1 and boxes[img_index][0] is not None:
+			img_list_map = np.expand_dims(img_list[img_index], axis = 0)
+			img_list_map = np.repeat(img_list_map, repeats = len(boxes[img_index]), axis = 0)
+			box_clipping.append(list(map(clipping_method, img_list_map, boxes[img_index])))
 		else:
 			box_clipping.append([[None]])
 
@@ -351,6 +353,7 @@ def clipping_boxes(img_list, boxes):
 
 
 def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, purpose = None):
+
 	def crop_with_percent(img, box, rate = 0):
 		x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
@@ -367,14 +370,14 @@ def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, pu
 
 	if purpose == 'input':
 		cropped_faces = []
-		for i in range(len(img_list)):
-			if len(box_clipping[i]) >= 1:
-				img_list_map = np.expand_dims(img_list[i], axis = 0)
-				img_list_map = np.repeat(img_list_map, repeats = len(box_clipping[i]), axis = 0)
-				cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[i])))
+		for img_index in range(len(img_list)):
+			if len(box_clipping[img_index]) >= 1:
+				img_list_map = np.expand_dims(img_list[img_index], axis = 0)
+				img_list_map = np.repeat(img_list_map, repeats = len(box_clipping[img_index]), axis = 0)
+				cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[img_index])))
 
 	elif purpose == 'anchor':
-		cropped_faces = [crop_with_percent(img_list[i], box_clipping[i][0], percent) for i in range(len(img_list))]  # cần fix lại
+		cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], percent) for img_index in range(len(img_list))]  # cần fix lại
 
 	return cropped_faces
 
@@ -419,8 +422,10 @@ def vector_embedding(infer_model, img_list, purpose = 'input'):
 
 def names_to_integers(list_name):
 	unique_names = np.unique(list_name)
-	label_to_int = {label: i for i, label in enumerate(unique_names)}
-	int_to_label = {i: label for i, label in enumerate(unique_names)}
+
+	label_to_int = {label: integer for integer, label in enumerate(unique_names)}
+	int_to_label = {integer: label for integer, label in enumerate(unique_names)}
+
 	mapped_name = np.array([label_to_int[name] for name in list_name]).astype('int16')
 	return int_to_label, mapped_name
 
@@ -441,18 +446,21 @@ def get_neighbors(train, test_row, num_neighbors):
 	euclidean_distances = list(map(euclidean_distance, test_rows, train))
 	euclidean_distance_index = euclidean_distances.copy()
 	euclidean_distance_index = sorted(range(len(euclidean_distance_index)),
-									                        key = lambda tup: euclidean_distance_index[tup])
+																					key = lambda tup: euclidean_distance_index[tup])
 	euclidean_distances.sort(key = lambda tup: tup[0])
 	neighbors = list()
 	cosine_scores = list()
-	for i in range(num_neighbors):
-		cos_dist = cosine_distance(test_row, train[euclidean_distance_index[i]][:-1])
+
+	for neighbor_index in range(num_neighbors):
+		cos_dist = cosine_distance(test_row, train[euclidean_distance_index[neighbor_index]][:-1])
+
 		if cos_dist < CFG_REG.KNN.THRESHOLD:
 			neighbors.append(None)
 			cosine_scores.append(None)
 		else:
-			neighbors.append(euclidean_distances[i][1])
+			neighbors.append(euclidean_distances[neighbor_index][1])
 			cosine_scores.append(cos_dist)
+
 	return neighbors, cosine_scores
 
 
@@ -460,10 +468,11 @@ def get_neighbors(train, test_row, num_neighbors):
 def classification(mapping, train, test_row, num_neighbors):
 	neighbors, cosine_scores = get_neighbors(train, test_row, num_neighbors)
 	output_values = [row for row in neighbors if row is not None]
+
 	if output_values:
 		prediction = max(set(output_values), key = output_values.count)
-		prediction_index = [i for i in range(len(output_values)) if output_values[i] == prediction]
-		cosine_score = max([cosine_scores[i] for i in prediction_index])
+		prediction_index = [index for index in range(len(output_values)) if output_values[index] == prediction]
+		cosine_score = max([cosine_scores[index] for index in prediction_index])
 		prediction = mapping[prediction]
 	else:
 		prediction = None
@@ -480,14 +489,14 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 	new_shape[-1] += 1
 	new_shape = tuple(new_shape)
 
-	anchor_mega = np.empty(new_shape)
-	for i in range(len(anchor_mega)):
-		anchor_mega[i] = np.append(train[i], anchor_mapped_label[i])
+	anchor = np.empty(new_shape)
+	for row_index in range(len(anchor)):
+		anchor[row_index] = np.append(train[row_index], anchor_mapped_label[row_index])
 
 	predictions = list()
 	cosine_prediction = list()
 	for row in test:
-		output, score = classification(int_to_label, anchor_mega, row, num_neighbors)
+		output, score = classification(int_to_label, anchor, row, num_neighbors)
 		predictions.append(output)
 		cosine_prediction.append(score)
 
@@ -496,23 +505,24 @@ def k_nearest_neighbors(label, train, test, num_neighbors):
 
 def knn_prediction(anchor_label, anchor_embed, input_embed):
 	predicted_ids, predicted_scores = map(list, zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed,
-																		  CFG_REG.KNN.NUM_NEIGHBORS) for embed in input_embed]))
+																				CFG_REG.KNN.NUM_NEIGHBORS) for embed in input_embed]))
 	# list comprehension returns multiple lists
 
 	return predicted_ids, predicted_scores
 
 
-def indices(seq, values):
+def indices(sequence, values):
 	matched_index = []
 	for value in values:
-		lst = [i for i, x in enumerate(seq) if x == value]
-		matched_index.append(lst)
+		match_list = [index for index, element in enumerate(sequence) if element == value]
+		matched_index.append(match_list)
 
 	return matched_index
 
 
 def check_duplicates_ids(ids_list, scores_list, bbox_list):
 	check = [ids[0] for ids in ids_list]
+
 	if len(check) != len(set(check)):
 		indices_list = indices(check, (key for key, count in Counter(check).items() if count > 1))
 		non_rep = indices(check, (key for key, count in Counter(check).items() if count == 1))
@@ -521,14 +531,14 @@ def check_duplicates_ids(ids_list, scores_list, bbox_list):
 		keep_id += non_rep
 
 		for img_id in indices_list:
-			scores = [scores_list[i] for i in img_id]
+			scores = [scores_list[id] for id in img_id]
 			scores = np.array(scores)
 			max_id = np.argmax(scores)
 			keep_id.append(img_id[max_id])
 
-		cleared_bbox = [bbox_list[i] for i in keep_id]
-		cleared_scores = [scores_list[i] for i in keep_id]
-		cleared_ids = [ids_list[i] for i in keep_id]
+		cleared_bbox = [bbox_list[index] for index in keep_id]
+		cleared_scores = [scores_list[index] for index in keep_id]
+		cleared_ids = [ids_list[index] for index in keep_id]
 
 	else:
 		cleared_bbox = bbox_list
@@ -542,33 +552,33 @@ def clear_results(images, scores, img_names, boxes, ids, paths, person = None):
 	keep_img = list()
 
 	if person:
-		for i in range(len(ids)):
-			keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind][0] in person]
-			boxes[i] = [boxes[i][ind] for ind in keep_index]
-			ids[i] = [ids[i][ind] for ind in keep_index]
-			scores[i] = [scores[i][ind] for ind in keep_index]
+		for id_index in range(len(ids)):
+			keep_index = [index for index in range(len(ids[id_index])) if ids[id_index][index][0] in person]
+			boxes[id_index] = [boxes[id_index][index] for index in keep_index]
+			ids[id_index] = [ids[id_index][index] for index in keep_index]
+			scores[id_index] = [scores[id_index][index] for index in keep_index]
 
 			if keep_index:
-				keep_img.append(i)
+				keep_img.append(id_index)
 
 	else:
-		for i in range(len(ids)):
-			keep_index = [ind for ind in range(len(ids[i])) if ids[i][ind] != [None]]
-			boxes[i] = [boxes[i][ind] for ind in keep_index]
-			ids[i] = [ids[i][ind] for ind in keep_index]
-			scores[i] = [scores[i][ind] for ind in keep_index]
+		for id_index in range(len(ids)):
+			keep_index = [index for index in range(len(ids[id_index])) if ids[id_index][index] != [None]]
+			boxes[id_index] = [boxes[id_index][index] for index in keep_index]
+			ids[id_index] = [ids[id_index][index] for index in keep_index]
+			scores[id_index] = [scores[id_index][index] for index in keep_index]
 
 			if keep_index:
-				keep_img.append(i)
+				keep_img.append(id_index)
 
-	new_names = [img_names[i] for i in range(len(img_names)) if boxes[i]]
+	new_names = [img_names[name_index] for name_index in range(len(img_names)) if boxes[name_index]]
 	new_scores = list(filter(None, scores))
 	new_boxes = list(filter(None, boxes))
 	new_ids = list(filter(None, ids))
 
 	new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
-	images = [images[i] for i in keep_img]
-	paths = [paths[i] for i in keep_img]
+	images = [images[img_index] for img_index in keep_img]
+	paths = [paths[path_index] for path_index in keep_img]
 
 	df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores, 'paths': paths})
 	df_new = df_new.reset_index(drop = True)
@@ -601,8 +611,6 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
 
 	input_img = read_images(input_paths, purpose = 'input')
 	anchor_img = read_images(anchor_paths, purpose = 'anchor')
-
-	mtcnn, infer_model = create_facenet_models()
 
 	input_boxes, _, _ = get_bounding_box(mtcnn, input_img, CFG_REG.BATCH_SIZE)
 	anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
