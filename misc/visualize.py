@@ -63,9 +63,3 @@ def visualizing_bounding_boxes(df, img_list):
 
     return img_list
 
-
-def visualizing_bounding_boxes(df, img_list):
-    img_list = list(map(drawing_boxes, list(df.iterrows()), img_list))
-    img_list = np.array(img_list)
-
-    return img_list
