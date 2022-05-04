@@ -17,7 +17,7 @@ def get_smile_score(df, img_list):
 
 	for img_index in range(len(df)):
 		input_data = get_target_bbox(img_list[img_index], df["bboxes"][img_index], p = CFG_SMILE.EXTEND_RATE)
-		scores = []
+		faces_smile_scores = []
 
 		for cropped_face in input_data:
 			cropped_face = cropped_face[..., ::-1].copy() #RGB --> BGR
@@ -27,10 +27,10 @@ def get_smile_score(df, img_list):
 			except:
 				predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], detector_backend = 'retinaface', enforce_detection = True)
 
-			scores.append(predictions['emotion']['happy'])
+			faces_smile_scores.append(predictions['emotion']['happy'])
 
-		smile_scores.append([[score] for score in scores])
-		smile_score_avg.append(sum(scores) / len(scores))
+		smile_scores.append([[score] for score in faces_smile_scores])
+		smile_score_avg.append(sum(faces_smile_scores) / len(faces_smile_scores))
 
 	new_df = df.copy()
 	new_df['smile score average'] = smile_score_avg
