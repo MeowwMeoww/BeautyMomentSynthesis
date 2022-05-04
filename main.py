@@ -11,6 +11,7 @@ import datetime
 from misc.log import *
 from config import *
 from misc.visualize import *
+from misc.utils import *
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -97,59 +98,59 @@ def parse_args():
 
 
 def main():
-  start = time.time()
-  args = parse_args()
-  finding_names = args.find_person.split()
-  print('People we need to identify:', finding_names)
-  print('Used device: ', config.DEVICE)
+    start = time.time()
+    args = parse_args()
+    finding_names = args.find_person.split()
+    print('People we need to identify:', finding_names)
+    print('Used device: ', config.DEVICE)
 
-  input_paths, input_names = return_paths(args.original_dataset_path, 'input')
-  anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
+    input_paths, input_names = return_paths(args.original_dataset_path, 'input')
+    anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
 
-  mtcnn, infer_model = create_facenet_models()
-  fiqa_net = FIQA_network()
+    mtcnn, infer_model = create_facenet_models()
+    fiqa_net = FIQA_network()
 
-  if fiqa_net and mtcnn and infer_model is not None:
-    print('Initializing FIQA and FaceNet models')
-  else:
-    raise Exception('Failed to create FIQA + FaceNet models')
+    if fiqa_net and mtcnn and infer_model is not None:
+        print('-----Initializing FIQA and FaceNet models-----')
+    else:
+        raise Exception('-----Failed to create FIQA + FaceNet models-----')
 
-  append_df = []
-  for batch_index in range(len(input_paths)):
-    df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
-    df, input_img = FIQA(df, input_img, fiqa_net)
-    df, input_img = get_smile_score(df, input_img)
-    append_df.append(df)
+    append_df = []
+    for batch_index in range(len(input_paths)):
+        df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+        df, input_img = FIQA(df, input_img, fiqa_net)
+        df, input_img = get_smile_score(df, input_img)
+        append_df.append(df)
 
-    end = time.time()
-    print('Finished batch {}'.format(batch_index + 1))
-    print('Time since start: ', end-start)
+        end = time.time()
+        print('-----Finished batch {} -----'.format(batch_index + 1))
+        print('Time since start: ', end-start)
 
-  df_final = pd.concat(append_df)
-  df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
-  df_final.reset_index(drop = True)
-
-  if args.find_all:
-    finding_ids = [finding_names[x:x+1] for x in range(0, len(finding_names), 1)]
-    df_final = df_final[df_final['ids'].apply(lambda x: x == finding_ids)]
+    df_final = pd.concat(append_df)
+    df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
     df_final.reset_index(drop = True)
 
-  df_final = df_final.iloc[:args.number_of_images]
-  input_img = read_images(list(df_final['paths']), purpose = 'input')
+    finding_ids = [finding_names[x:x+1] for x in range(0, len(finding_names), 1)]
+    if args.find_all and len(finding_ids) > 1:
+        df_final = df_final[df_final['ids'].apply(lambda x: check_ids_equal(x, finding_ids))]
+        df_final.reset_index(drop = True)
 
-  if args.visualize_boxes:
-    input_img = visualizing_bounding_boxes(df_final, input_img)
+    df_final = df_final.iloc[:args.number_of_images]
+    input_img = read_images(list(df_final['paths']), purpose = 'input')
 
-  make_video(img_list = input_img,
-             output_path = args.output_path,
-             effect_speed = args.effect_speed,
-             duration = args.duration,
-             fps = args.fps,
-             fraction = args.fraction)
+    if args.visualize_boxes:
+        input_img = visualizing_bounding_boxes(df_final, input_img)
 
-  end = time.time()
-  print('Done creating video')
-  print('Total time: ', end-start)
+    make_video(img_list = input_img,
+               output_path = args.output_path,
+               effect_speed = args.effect_speed,
+               duration = args.duration,
+               fps = args.fps,
+               fraction = args.fraction)
+
+    end = time.time()
+    print('-----Done creating video-----')
+    print('Total time: ', end-start)
 
 if __name__ == '__main__':
     main()
