@@ -73,7 +73,13 @@ def parse_args():
                         type = str,
                         required=False,
                         default=None)
-                        
+
+    parser.add_argument('--find_all',
+                        help='Only keep images that have all people in the query search',
+                        type=bool,
+                        required=False,
+                        default=False)
+
     parser.add_argument('--log',
                         help='Find the person',
                         type=bool,
@@ -122,6 +128,11 @@ def main():
   df_final = pd.concat(append_df)
   df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
   df_final.reset_index(drop = True)
+
+  if args.find_all:
+    finding_ids = [finding_names[x:x+1] for x in range(0, len(finding_names), 1)]
+    df_final = df_final[df_final['ids'].apply(lambda x: x == finding_ids)]
+    df_final.reset_index(drop = True)
 
   df_final = df_final.iloc[:args.number_of_images]
   input_img = read_images(list(df_final['paths']), purpose = 'input')

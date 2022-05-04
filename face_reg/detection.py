@@ -101,7 +101,7 @@ def create_facenet_models():
 	infer_model = InceptionResnetV1(pretrained = 'vggface2', device = device).eval()
 
 	mtcnn = MTCNN(
-		image_size = 160, margin = 0, min_face_size = 50,
+		image_size = 160, margin = 0, min_face_size = 100,
 		thresholds = [0.7, 0.7, 0.8], post_process = False,
 		device = device, selection_method = 'largest_over_threshold'
 	)
