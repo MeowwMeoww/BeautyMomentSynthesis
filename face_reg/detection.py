@@ -50,7 +50,6 @@ def resize_images(img_list, purpose, fraction = 1):
 
 
 def return_paths(root, purpose, batch_size = 128):
-    all_paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
     paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
     if purpose == 'input':
@@ -627,7 +626,7 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
 
     final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-    df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores, \
+    df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
                                   boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
 
     return df, input_img

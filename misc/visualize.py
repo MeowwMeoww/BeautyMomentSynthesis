@@ -28,7 +28,7 @@ def drawing_boxes(row, img):
         img = cv2.rectangle(img, start_point, end_point, VISUALIZE.BBOX.COLOR, thickness = VISUALIZE.BBOX.THICKNESS)
 
         text_size, _ = cv2.getTextSize('Face: {0:.3g}'.format(face_scores[bbox_index][0]), cv2.FONT_HERSHEY_SIMPLEX, VISUALIZE.NOTATIONS.FONT_SCALE,
-                                        VISUALIZE.NOTATIONS.THICKNESS)
+                                      VISUALIZE.NOTATIONS.THICKNESS)
 
         text_w, text_h = text_size
 
@@ -62,4 +62,3 @@ def visualizing_bounding_boxes(df, img_list):
     img_list = np.array(img_list)
 
     return img_list
-
