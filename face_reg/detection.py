@@ -29,7 +29,7 @@ def padding_image(img, max_width, max_height):
     return img
 
 
-def resize_images(img_list, purpose, fraction = 1):
+def resize_images(img_list, purpose, fraction = config.RESIZE_RATE):
     if purpose == 'anchor':
         max_width = max([img_list[i].shape[-2] for i in range(len(img_list))])
         max_height = max([img_list[i].shape[-3] for i in range(len(img_list))])
@@ -49,7 +49,7 @@ def resize_images(img_list, purpose, fraction = 1):
     return img_list
 
 
-def return_paths(root, purpose, batch_size = 128):
+def return_paths(root, purpose, batch_size = config.BATCH_SIZE):
     paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
     if purpose == 'input':
@@ -605,7 +605,7 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
 
     + input_img: np.ndarray.
     """
-
+    torch.cuda.empty_cache()
     input_img = read_images(input_paths, purpose = 'input')
     anchor_img = read_images(anchor_paths, purpose = 'anchor')
 
@@ -618,15 +618,19 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
     input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
     anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
 
-    cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
-    cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
+    try:
+      cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
+      cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
 
-    anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose = 'anchor')
-    input_embed = vector_embedding(infer_model, cropped_img_input, purpose = 'input')
+      anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose = 'anchor')
+      input_embed = vector_embedding(infer_model, cropped_img_input, purpose = 'input')
 
-    final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
+      final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-    df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
-                                  boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
+      df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
+                                    boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
 
-    return df, input_img
+      return df, input_img
+
+    except:
+      return None, None

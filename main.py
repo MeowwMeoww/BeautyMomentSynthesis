@@ -117,14 +117,19 @@ def main():
 
     append_df = []
     for batch_index in range(len(input_paths)):
-        df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+      df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+
+      try:
+        torch.cuda.empty_cache()
         df, input_img = FIQA(df, input_img, fiqa_net)
         df, input_img = get_smile_score(df, input_img)
         append_df.append(df)
+      except:
+        pass
 
-        end = time.time()
-        print('-----Finished batch {} -----'.format(batch_index + 1))
-        print('Time since start: ', end-start)
+      end = time.time()
+      print('-----Finished batch {} -----'.format(batch_index + 1))
+      print('Time since start: ', end - start)
 
     df_final = pd.concat(append_df)
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
