@@ -141,10 +141,14 @@ def main():
         df_final.reset_index(drop = True)
 
     df_final = df_final.iloc[:args.number_of_images]
-    input_img = read_images(list(df_final['paths']), purpose = 'input')
+    input_img, input_img_resized, input_shape_flag = read_images(list(df_final['paths']), purpose = 'input')
 
     if args.visualize_boxes:
-        input_img = visualizing_bounding_boxes(df_final, input_img)
+      if not input_shape_flag:
+        df_final['bboxes'] = rescale_bboxes(df_final['bboxes'], input_img, input_img_resized)
+
+      input_img = visualizing_bounding_boxes(df_final, input_img_resized)
+      del input_img_resized
 
     make_video(img_list = input_img,
                output_path = args.output_path,

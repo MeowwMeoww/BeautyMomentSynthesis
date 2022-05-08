@@ -67,12 +67,15 @@ def return_paths(root, purpose, batch_size = config.BATCH_SIZE):
 def read_images(paths, purpose):
     img_list = list(map(read_image_from_path, paths))
     shape_check = all(img_list[index].shape == img_list[0].shape for index in range(len(img_list)))
-    if shape_check:
-        img_list = np.array(img_list)
-    else:
-        img_list = resize_images(img_list, purpose)
 
-    return img_list
+    if shape_check:
+      img_list = np.array(img_list)
+      img_resized_list = img_list.copy()
+
+    else:
+      img_resized_list = resize_images(img_list, purpose) #img_list o dang list
+
+    return img_list, img_resized_list, shape_check
 
 
 def create_facenet_models():
@@ -606,19 +609,24 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
     + input_img: np.ndarray.
     """
     torch.cuda.empty_cache()
-    input_img = read_images(input_paths, purpose = 'input')
-    anchor_img = read_images(anchor_paths, purpose = 'anchor')
 
-    input_boxes, _, _ = get_bounding_box(mtcnn, input_img, CFG_REG.BATCH_SIZE)
+    input_img, input_img_resized, input_shape_flag = read_images(input_paths, purpose = 'input')
+    _, anchor_img, _ = read_images(anchor_paths, purpose = 'anchor')
+
+    input_boxes, _, _ = get_bounding_box(mtcnn, input_img_resized, CFG_REG.BATCH_SIZE)
     anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
 
-    input_boxes = clipping_boxes(input_img, input_boxes)
+    input_boxes = clipping_boxes(input_img_resized, input_boxes)
     anchor_boxes = clipping_boxes(anchor_img, anchor_boxes)
+
+    if not input_shape_flag:
+      input_boxes = rescale_bboxes(input_boxes, input_img_resized, input_img)
+    del input_img_resized
 
     input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
     anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
 
-    try:
+    if not input_paths:
       cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
       cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
 
@@ -632,5 +640,5 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
 
       return df, input_img
 
-    except:
+    else:
       return None, None
