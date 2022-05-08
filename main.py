@@ -145,8 +145,8 @@ def main():
 
     if args.visualize_boxes:
       if not input_shape_flag:
-        df_final['bboxes'] = rescale_bboxes(df_final['bboxes'], input_img, input_img_resized)
-
+        bboxes = df_final['bboxes'].tolist()
+        df_final['bboxes'] = rescale_bboxes(bboxes, input_img, input_img_resized)
       input_img = visualizing_bounding_boxes(df_final, input_img_resized)
       del input_img_resized
 
@@ -159,7 +159,7 @@ def main():
 
     end = time.time()
     print('-----Done creating video-----')
-    print('Total time: ', end-start)
+    print('Total time: {0:.4g}'.format(end-start))
 
 if __name__ == '__main__':
     main()
