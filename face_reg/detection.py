@@ -12,7 +12,7 @@ from numpy import dot
 from numpy.linalg import norm
 from collections import Counter
 from config import *
-
+from misc.utils import *
 
 def read_image_from_path(path):
     img = cv2.imread(path, 1)
