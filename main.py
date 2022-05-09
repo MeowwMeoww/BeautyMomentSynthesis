@@ -1,5 +1,3 @@
-print("-----Initializing-----")
-
 import argparse
 import time
 from SDD_FIQA import *
@@ -100,18 +98,33 @@ def parse_args():
 def main():
     start = time.time()
     args = parse_args()
+    
+    log = log_init()
+    
     finding_names = args.find_person.split()
     print('People we need to identify:', finding_names)
     print('Used device: ', config.DEVICE)
 
+    log = write_log(old_log=log,
+                    new_message= "People we need to identify:" + finding_names,
+                    type="string + enter")
+
+    log = write_log(old_log=log,
+                    new_message= "Used device: " + config.DEVICE,
+                    type="string + enter")
+    
     input_paths, input_names = return_paths(args.original_dataset_path, 'input')
     anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
 
     mtcnn, infer_model = create_facenet_models()
     fiqa_net = FIQA_network()
+    print('-----Initializing FIQA and FaceNet models-----')
 
     if fiqa_net and mtcnn and infer_model is not None:
-        print('-----Initializing FIQA and FaceNet models-----')
+        print('-----Done initialized FIQA and FaceNet models-----')
+        log = write_log(old_log=log,
+                        new_message="-----Done initialized FIQA and FaceNet models-----",
+                        type="string + enter")
     else:
         raise Exception('-----Failed to create FIQA + FaceNet models-----')
 
@@ -124,30 +137,70 @@ def main():
         df, input_img = FIQA(df, input_img, fiqa_net)
         df, input_img = get_smile_score(df, input_img)
         append_df.append(df)
-      except:
+
+      finally:
         pass
 
+      log = write_log(old_log = log,
+                      new_message = "-----Finished batch {} -----".format(batch_index + 1),
+                      type = "string + enter")
+
       end = time.time()
+
+      log = write_log(old_log = log,
+                      new_message = "-----Time since start for batch {batch_index}: {time:.4g} -----".format(batch_index = batch_index + 1, time = end-start),
+                      type = "string + enter")
+
       print('-----Finished batch {} -----'.format(batch_index + 1))
       print('Time since start: {0:.4g}'.format(end-start))
 
-    df_final = pd.concat(append_df)
+    log = write_log(old_log=log,
+                    new_message="Processing DataFrame",
+                    type="string + enter")
+
+    try:
+      df_final = pd.concat(append_df)
+    except Exception:
+      raise Exception("Can't find any images")
+
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
     df_final.reset_index(drop = True)
-
+    
     finding_ids = [finding_names[x:x+1] for x in range(0, len(finding_names), 1)]
     if args.find_all and len(finding_ids) > 1:
         df_final = df_final[df_final['ids'].apply(lambda x: check_ids_equal(x, finding_ids))]
         df_final.reset_index(drop = True)
 
-    df_final.to_csv('FINAL_01.csv', index = False)
+    log = write_log(old_log=log, 
+                    new_message=df_final, 
+                    type="dataframe + enter")
+
     df_final = df_final.iloc[:args.number_of_images]
     input_img, input_img_resized, input_shape_flag = read_images(list(df_final['paths']), purpose = 'input')
 
+    print('-----Creating video-----')
+
+    log = write_log(old_log=log,
+                    new_message="-----Creating video-----",
+                    type="string + enter")
+    
+    log = write_log(old_log=log,
+                    new_message="Visualize bounding boxes: {}".format(args.visualize_boxes),
+                    type="string + enter")
+    
     if args.visualize_boxes:
       if not input_shape_flag:
         bboxes = df_final['bboxes'].tolist()
         df_final['bboxes'] = rescale_bboxes(bboxes, input_img, input_img_resized)
+
+        log = write_log(old_log = log,
+                        new_message = "New dataframe with rescaled bounding boxes (for visualizaztion purpose)",
+                        type = "string + enter")
+
+        log = write_log(old_log = log,
+                        new_message = df_final,
+                        type = "dataframe + enter")
+
       input_img = visualizing_bounding_boxes(df_final, input_img_resized)
       del input_img_resized
 
@@ -160,7 +213,20 @@ def main():
 
     end = time.time()
     print('-----Done creating video-----')
-    print('Total time: {0:.4g}'.format(end-start))
+
+    log = write_log(old_log=log,
+                    new_message="-----Done creating video-----",
+                    type="string + enter")
+
+    print('-----DONE-----. Total time: ', end-start)
+
+    log = write_log(old_log=log,
+                    new_message= "DONE. Total time: {0:.4g} ".format(end-start),
+                    type="string + enter")
+    
+    if args.log:
+        log_final(log)
+
 
 if __name__ == '__main__':
     main()
