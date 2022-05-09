@@ -138,7 +138,7 @@ def main():
         df, input_img = get_smile_score(df, input_img)
         append_df.append(df)
 
-      finally:
+      except:
         pass
 
       log = write_log(old_log = log,
@@ -160,7 +160,7 @@ def main():
 
     try:
       df_final = pd.concat(append_df)
-    except Exception:
+    except:
       raise Exception("Can't find any images")
 
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
