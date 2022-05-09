@@ -106,11 +106,11 @@ def main():
     print('Used device: ', config.DEVICE)
 
     log = write_log(old_log=log,
-                    new_message= "People we need to identify:" + finding_names,
+                    new_message= "People we need to identify: {}".format(finding_names),
                     type="string + enter")
 
     log = write_log(old_log=log,
-                    new_message= "Used device: " + config.DEVICE,
+                    new_message= "Used device: {}".format(config.DEVICE),
                     type="string + enter")
     
     input_paths, input_names = return_paths(args.original_dataset_path, 'input')
@@ -194,7 +194,7 @@ def main():
         df_final['bboxes'] = rescale_bboxes(bboxes, input_img, input_img_resized)
 
         log = write_log(old_log = log,
-                        new_message = "New dataframe with rescaled bounding boxes (for visualizaztion purpose)",
+                        new_message = "New dataframe with rescaled bounding boxes (for visualization purpose)",
                         type = "string + enter")
 
         log = write_log(old_log = log,
@@ -226,6 +226,7 @@ def main():
     
     if args.log:
         log_final(log)
+
 
 if __name__ == '__main__':
     main()
