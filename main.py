@@ -212,6 +212,7 @@ def main():
                fraction = args.fraction)
 
     end = time.time()
+
     print('-----Done creating video-----')
 
     log = write_log(old_log=log,
