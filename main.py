@@ -227,6 +227,5 @@ def main():
     if args.log:
         log_final(log)
 
-
 if __name__ == '__main__':
     main()
