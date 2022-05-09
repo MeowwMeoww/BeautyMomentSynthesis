@@ -6,7 +6,7 @@ config = edict()
 config.ANCHOR_SIZE = (400, 600)
 config.DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 config.BATCH_SIZE = 16
-config.RESIZE_RATE = 0.5
+config.RESIZE_RATE = 1
 
 CFG_FIQA = edict()
 CFG_FIQA.THRESHOLD = 40
