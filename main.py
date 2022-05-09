@@ -140,6 +140,7 @@ def main():
         df_final = df_final[df_final['ids'].apply(lambda x: check_ids_equal(x, finding_ids))]
         df_final.reset_index(drop = True)
 
+    df_final.to_csv('FINAL_01.csv', index = False)
     df_final = df_final.iloc[:args.number_of_images]
     input_img, input_img_resized, input_shape_flag = read_images(list(df_final['paths']), purpose = 'input')
 
