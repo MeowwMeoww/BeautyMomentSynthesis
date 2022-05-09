@@ -129,7 +129,7 @@ def main():
 
       end = time.time()
       print('-----Finished batch {} -----'.format(batch_index + 1))
-      print('Time since start: ', end - start)
+      print('Time since start: {0:.4g}'.format(end-start))
 
     df_final = pd.concat(append_df)
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
