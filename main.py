@@ -1,5 +1,3 @@
-print("-----Initializing-----")
-
 import argparse
 import time
 from SDD_FIQA import *
