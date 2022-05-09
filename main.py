@@ -108,10 +108,11 @@ def main():
     print('Used device: ', config.DEVICE)
 
     log = write_log(old_log=log,
-                    new_message="People we need to identify:"+finding_names,
+                    new_message= "People we need to identify:" + finding_names,
                     type="string + enter")
+
     log = write_log(old_log=log,
-                    new_message="Used device: "+config.DEVICE,
+                    new_message= "Used device: " + config.DEVICE,
                     type="string + enter")
     
     input_paths, input_names = return_paths(args.original_dataset_path, 'input')
@@ -122,48 +123,50 @@ def main():
     print('-----Initializing FIQA and FaceNet models-----')
 
     if fiqa_net and mtcnn and infer_model is not None:
-        print('Done')
+        print('-----Done initialized FIQA and FaceNet models-----')
         log = write_log(old_log=log,
-                        new_message="-----Initialized FIQA and FaceNet models-----",
+                        new_message="-----Done initialized FIQA and FaceNet models-----",
                         type="string + enter")
     else:
         raise Exception('-----Failed to create FIQA + FaceNet models-----')
 
     append_df = []
     for batch_index in range(len(input_paths)):
-        df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+      df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
+
+      try:
+        torch.cuda.empty_cache()
         df, input_img = FIQA(df, input_img, fiqa_net)
         df, input_img = get_smile_score(df, input_img)
         append_df.append(df)
-        
-        log = write_log(old_log=log, 
-                        new_message=df, 
-                        type="dataframe + enter")
 
-        end = time.time()
-        print('-----Finished batch {} -----'.format(batch_index + 1))
-        
-        log = write_log(old_log=log,
-                        new_message="-----Finished batch {} -----".format(batch_index + 1),
-                        type="string + enter")
-        
-        print('Time since start: ', end-start)
+      finally:
+        pass
+
+      log = write_log(old_log = log,
+                      new_message = "-----Finished batch {} -----".format(batch_index + 1),
+                      type = "string + enter")
+
+      end = time.time()
+
+      log = write_log(old_log = log,
+                      new_message = "-----Time since start for batch {batch_index}: {time:.4g} -----".format(batch_index = batch_index + 1, time = end-start),
+                      type = "string + enter")
+
+      print('-----Finished batch {} -----'.format(batch_index + 1))
+      print('Time since start: {0:.4g}'.format(end-start))
 
     log = write_log(old_log=log,
                     new_message="Processing DataFrame",
                     type="string + enter")
-    
-    df_final = pd.concat(append_df)
+
+    try:
+      df_final = pd.concat(append_df)
+    except Exception:
+      raise Exception("Can't find any images")
+
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
     df_final.reset_index(drop = True)
-    
-    log = write_log(old_log=log, 
-                    new_message=df_final, 
-                    type="dataframe + enter")
-
-    log = write_log(old_log=log,
-                    new_message="Filtering DataFrame",
-                    type="string + enter")
     
     finding_ids = [finding_names[x:x+1] for x in range(0, len(finding_names), 1)]
     if args.find_all and len(finding_ids) > 1:
@@ -173,11 +176,12 @@ def main():
     log = write_log(old_log=log, 
                     new_message=df_final, 
                     type="dataframe + enter")
-    
+
     df_final = df_final.iloc[:args.number_of_images]
-    input_img = read_images(list(df_final['paths']), purpose = 'input')
+    input_img, input_img_resized, input_shape_flag = read_images(list(df_final['paths']), purpose = 'input')
 
     print('-----Creating video-----')
+
     log = write_log(old_log=log,
                     new_message="-----Creating video-----",
                     type="string + enter")
@@ -187,7 +191,20 @@ def main():
                     type="string + enter")
     
     if args.visualize_boxes:
-        input_img = visualizing_bounding_boxes(df_final, input_img)
+      if not input_shape_flag:
+        bboxes = df_final['bboxes'].tolist()
+        df_final['bboxes'] = rescale_bboxes(bboxes, input_img, input_img_resized)
+
+        log = write_log(old_log = log,
+                        new_message = "New dataframe with rescaled bounding boxes (for visualizaztion purpose)",
+                        type = "string + enter")
+
+        log = write_log(old_log = log,
+                        new_message = df_final,
+                        type = "dataframe + enter")
+
+      input_img = visualizing_bounding_boxes(df_final, input_img_resized)
+      del input_img_resized
 
     make_video(img_list = input_img,
                output_path = args.output_path,
@@ -198,12 +215,15 @@ def main():
 
     end = time.time()
     print('-----Done creating video-----')
+
     log = write_log(old_log=log,
                     new_message="-----Done creating video-----",
                     type="string + enter")
-    print('DONE. Total time: ', end-start)
+
+    print('-----DONE-----. Total time: ', end-start)
+
     log = write_log(old_log=log,
-                    new_message="DONE. Total time: ", end-start,
+                    new_message= "DONE. Total time: {0:.4g} ".format(end-start),
                     type="string + enter")
     
     if args.log:

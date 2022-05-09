@@ -12,7 +12,7 @@ from numpy import dot
 from numpy.linalg import norm
 from collections import Counter
 from config import *
-
+from misc.utils import *
 
 def read_image_from_path(path):
     img = cv2.imread(path, 1)
@@ -29,7 +29,7 @@ def padding_image(img, max_width, max_height):
     return img
 
 
-def resize_images(img_list, purpose, fraction = 1):
+def resize_images(img_list, purpose, fraction = config.RESIZE_RATE):
     if purpose == 'anchor':
         max_width = max([img_list[i].shape[-2] for i in range(len(img_list))])
         max_height = max([img_list[i].shape[-3] for i in range(len(img_list))])
@@ -49,8 +49,7 @@ def resize_images(img_list, purpose, fraction = 1):
     return img_list
 
 
-def return_paths(root, purpose, batch_size = 128):
-    all_paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
+def return_paths(root, purpose, batch_size = config.BATCH_SIZE):
     paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
     if purpose == 'input':
@@ -68,12 +67,15 @@ def return_paths(root, purpose, batch_size = 128):
 def read_images(paths, purpose):
     img_list = list(map(read_image_from_path, paths))
     shape_check = all(img_list[index].shape == img_list[0].shape for index in range(len(img_list)))
-    if shape_check:
-        img_list = np.array(img_list)
-    else:
-        img_list = resize_images(img_list, purpose)
 
-    return img_list
+    if shape_check:
+      img_list = np.array(img_list)
+      img_resized_list = img_list.copy()
+
+    else:
+      img_resized_list = resize_images(img_list, purpose) #img_list o dang list
+
+    return img_list, img_resized_list, shape_check
 
 
 def create_facenet_models():
@@ -606,28 +608,37 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
 
     + input_img: np.ndarray.
     """
+    torch.cuda.empty_cache()
 
-    input_img = read_images(input_paths, purpose = 'input')
-    anchor_img = read_images(anchor_paths, purpose = 'anchor')
+    input_img, input_img_resized, input_shape_flag = read_images(input_paths, purpose = 'input')
+    _, anchor_img, _ = read_images(anchor_paths, purpose = 'anchor')
 
-    input_boxes, _, _ = get_bounding_box(mtcnn, input_img, CFG_REG.BATCH_SIZE)
+    input_boxes, _, _ = get_bounding_box(mtcnn, input_img_resized, CFG_REG.BATCH_SIZE)
     anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
 
-    input_boxes = clipping_boxes(input_img, input_boxes)
+    input_boxes = clipping_boxes(input_img_resized, input_boxes)
     anchor_boxes = clipping_boxes(anchor_img, anchor_boxes)
+
+    if not input_shape_flag:
+      input_boxes = rescale_bboxes(input_boxes, input_img_resized, input_img)
+    del input_img_resized
 
     input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
     anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
 
-    cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
-    cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
+    try:
+      cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
+      cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
 
-    anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose = 'anchor')
-    input_embed = vector_embedding(infer_model, cropped_img_input, purpose = 'input')
+      anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose = 'anchor')
+      input_embed = vector_embedding(infer_model, cropped_img_input, purpose = 'input')
 
-    final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
+      final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-    df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores, \
-                                  boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
+      df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
+                                    boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
 
-    return df, input_img
+      return df, input_img
+
+    except:
+      return None, None
