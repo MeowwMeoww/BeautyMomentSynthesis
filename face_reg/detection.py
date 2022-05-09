@@ -626,7 +626,7 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
     input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
     anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
 
-    if not input_paths:
+    try:
       cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
       cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
 
@@ -640,5 +640,5 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
 
       return df, input_img
 
-    else:
+    except:
       return None, None
