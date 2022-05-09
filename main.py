@@ -96,6 +96,7 @@ def parse_args():
 
 
 def main():
+  try:
     start = time.time()
     args = parse_args()
     
@@ -224,7 +225,10 @@ def main():
     log = write_log(old_log=log,
                     new_message= "DONE. Total time: {0:.4g} ".format(end-start),
                     type="string + enter")
-    
+  except:
+    pass
+
+  finally:
     if args.log:
         log_final(log)
 
