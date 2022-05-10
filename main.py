@@ -231,8 +231,9 @@ def main():
     log = write_log(old_log=log,
                     new_message= "DONE. Total time: {0:.4g} ".format(end-start),
                     type="string + enter")
-  except:
-    pass
+
+  except Exception as e:
+    print(e)
 
   finally:
     if args.log:
