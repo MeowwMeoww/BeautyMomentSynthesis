@@ -117,6 +117,12 @@ def main():
     input_paths, input_names = return_paths(args.original_dataset_path, 'input')
     anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
 
+    people_in_anchor = np.unique(anchor_labels).tolist()
+    check_if_exist = [person in people_in_anchor for person in finding_names]
+
+    if False in check_if_exist:
+      raise Exception("Don't have the people you're finding in your anchor dataset")
+
     mtcnn, infer_model = create_facenet_models()
     fiqa_net = FIQA_network()
     print('-----Initializing FIQA and FaceNet models-----')
