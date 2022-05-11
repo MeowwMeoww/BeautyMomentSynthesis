@@ -7,6 +7,11 @@ from animations.animations import push_animation as push
 from animations.animations import split_animation as split
 from animations.animations import fade_animation as fade
 from animations.animations import extract_vid as vid
+from animations.animations import zoom_in_animation as zoom_in
+#from animations.animations import extract_vid as vid
+#from animations.animations import extract_vid as vid
+#from animations.animations import extract_vid as vid
+
 import random
 from tqdm import tqdm
 import numpy as np
@@ -18,7 +23,7 @@ def random_number():
 
 
 def initialize_video(image, W, H, effect_speed, fps, duration):
-    animation = {
+    transitions = {
         0: cover,
         1: uncover,
         2: comb,
@@ -26,12 +31,22 @@ def initialize_video(image, W, H, effect_speed, fps, duration):
         4: split,
         5: fade,
     }
+
+    to_bbox_animations = {
+      0: zoom_in,
+      1: rotate_zoom_in,
+    }
+
+    return_animation = {
+      0: zoom_out,
+      1: rotate_zoom_out,
+    }
     
     black_screen = np.zeros([H, W, 3], dtype=np.uint8)
     black_screen.fill(0)  # black screen
     
     frames = []
-    frames.append(animation[random_number()](img_list=[black_screen, image], 
+    frames.append(transitions[random_number()](img_list=[black_screen, image], 
                                              w=W, h=H,
                                              effect_speed=effect_speed, 
                                              fps=fps,
@@ -60,9 +75,3 @@ def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30, fracti
                       )
     
     vid(frames=frames, output_path=output_path, w=w, h=h, fps=fps)
-
-
-# img_list = []
-# for i in range(len(os.listdir(r"test/img"))):
-    # img_list.append("test/img/"+os.listdir(r"test/img")[i])
-# make_video(img_list=img_list, output_path="results/output_test.avi", effect_speed=2, duration=5, fps=120, fraction=2)
