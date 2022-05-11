@@ -139,6 +139,10 @@ def main():
         df, input_img = get_smile_score(df, input_img)
         append_df.append(df)
 
+        log = write_log(old_log = log,
+                new_message = df,
+                type = "dataframe + enter")
+
       except:
         pass
 
