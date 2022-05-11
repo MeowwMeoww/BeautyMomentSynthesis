@@ -45,14 +45,12 @@ def initialize_video(image, W, H, effect_speed, fps, duration):
     black_screen = np.zeros([H, W, 3], dtype=np.uint8)
     black_screen.fill(0)  # black screen
     
-    frames = []
-    frames.append(transitions[random_number()](img_list=[black_screen, image], 
-                                             w=W, h=H,
-                                             effect_speed=effect_speed, 
-                                             fps=fps,
-                                             duration=duration)
-                      )
-    return frames
+    transitions[random_number()](img_list=[black_screen, image], 
+                                               w=W, h=H,
+                                               output_path="tmp_0.mp4",
+                                               effect_speed=effect_speed, 
+                                               fps=fps,
+                                               duration=duration)
     
 
 def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30, fraction=1):
@@ -66,12 +64,13 @@ def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30, fracti
     }
 
     img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
-    frames = initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)    
+    initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)    
+    vid_paths = ["tmp_0.mp4"]
     
     for i in tqdm(range(len(img_list) - 1)):
-        frames.append(animation[random_number()](img_list=img_list[i:i + 2], w=w, h=h,
-                                                 effect_speed=effect_speed, fps=fps,
-                                                 duration=duration)
-                      )
+        animation[random_number()](img_list=img_list[i:i + 2], w=w, h=h,
+                                   output_path="tmp_{}.mp4".format(i+1), effect_speed=effect_speed, 
+                                   fps=fps, duration=duration)
+        vid_paths.append("tmp_{}.mp4".format(i+1))
     
-    vid(frames=frames, output_path=output_path, w=w, h=h, fps=fps)
+    # vid(frames=frames, output_path=output_path, w=w, h=h, fps=fps)
