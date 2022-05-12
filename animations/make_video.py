@@ -15,6 +15,7 @@ from animations.animations import zoom_in_animation as zoom_in
 import random
 from tqdm import tqdm
 import numpy as np
+import shutil
 
 
 def random_number():
@@ -32,7 +33,7 @@ def initialize_video(image, W, H, effect_speed, fps, duration):
         5: fade,
     }
 
-    to_bbox_animations = {
+    '''to_bbox_animations = {
       0: zoom_in,
       1: rotate_zoom_in,
     }
@@ -40,14 +41,14 @@ def initialize_video(image, W, H, effect_speed, fps, duration):
     return_animation = {
       0: zoom_out,
       1: rotate_zoom_out,
-    }
+    }'''
     
     black_screen = np.zeros([H, W, 3], dtype=np.uint8)
     black_screen.fill(0)  # black screen
     
     transitions[random_number()](img_list=[black_screen, image], 
                                                w=W, h=H,
-                                               output_path="tmp_0.mp4",
+                                               output_path="tmp/tmp_0.mp4",
                                                effect_speed=effect_speed, 
                                                fps=fps,
                                                duration=duration)
@@ -63,14 +64,17 @@ def make_video(img_list, output_path, effect_speed=1, duration=3, fps=30, fracti
         5: fade,
     }
 
+    os.mkdir("tmp")
+
     img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
-    initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)    
-    vid_paths = ["tmp_0.mp4"]
+    initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)
+    vid_paths = ["tmp/tmp_0.mp4"]
     
     for i in tqdm(range(len(img_list) - 1)):
         animation[random_number()](img_list=img_list[i:i + 2], w=w, h=h,
-                                   output_path="tmp_{}.mp4".format(i+1), effect_speed=effect_speed, 
+                                   output_path="tmp/tmp_{}.mp4".format(i+1), effect_speed=effect_speed, 
                                    fps=fps, duration=duration)
-        vid_paths.append("tmp_{}.mp4".format(i+1))
+        vid_paths.append("tmp/tmp_{}.mp4".format(i+1))
     
-    # vid(frames=frames, output_path=output_path, w=w, h=h, fps=fps)
+    vid(vid_paths=vid_paths, output_path=output_path, w=w, h=h, fps=fps)
+    shutil.rmtree("tmp")
