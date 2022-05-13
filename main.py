@@ -124,10 +124,10 @@ def main():
       raise Exception("Don't have the people you're finding in your anchor dataset")
 
     mtcnn, infer_model = create_facenet_models()
-    FIQA_net = FIQA_network()
+    fiqa_net = FIQA_network()
     print('-----Initializing FIQA and FaceNet models-----')
 
-    if FIQA_net and mtcnn and infer_model is not None:
+    if fiqa_net and mtcnn and infer_model is not None:
         print('-----Done initialized FIQA and FaceNet models-----')
 
         log = write_log(old_log=log,

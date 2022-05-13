@@ -246,4 +246,4 @@ def extract_vid(vid_paths, output_path, w=500, h=500, fps=30):
         vids.append(VideoFileClip(vid))
 
     final = concatenate_videoclips(vids)
-    final.write_videofile(output_path)
+    final.write_videofile(output_path, codec="libx264")

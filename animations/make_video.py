@@ -19,7 +19,7 @@ import shutil
 
 
 def random_number():
-    numb = random.randint(0, 6)
+    numb = random.randint(0, 5)
     return numb
 
 
