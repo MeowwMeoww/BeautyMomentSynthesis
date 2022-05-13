@@ -20,7 +20,7 @@ def process_images_for_vid(img_list, effect_speed, duration, fps, fraction=1):
     if w % effect_speed == 0:
         k = w // effect_speed
     else:
-        k = (w // effect_speed)  + 1
+        k = (w // effect_speed) + 1
         
     assert duration - k / fps > 0, f"change your parameters, current h = {h}, w = {w}, k = {k}, duration - k / fps = {duration - k / fps}"
 
@@ -67,9 +67,9 @@ def cover_animation(img_list, w, h, output_path, from_right=random.randint(0, 1)
             for _ in range(fps * duration - j):
                 frames.append(result)
 
-    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
 
 
@@ -95,9 +95,9 @@ def comb_animation(img_list, w, h, output_path, fps=30, effect_speed=2, duration
         for k in range(fps * duration - j):
             frames.append(img_list[i+1])
             
-    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
 
 
@@ -118,9 +118,9 @@ def push_animation(img_list, w, h, output_path, fps=30, effect_speed=2, duration
         for k in range(fps * duration - j):
             frames.append(img_list[i + 1])
 
-    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
 
 
@@ -141,9 +141,9 @@ def uncover_animation(img_list, w, h, output_path, fps=30, effect_speed=2, durat
         for k in range(fps * duration - j):
             frames.append(img_list[i + 1])
 
-    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
 
 
@@ -165,9 +165,9 @@ def split_animation(img_list, w, h, output_path, fps=30, effect_speed=2, duratio
         for k in range(fps * duration - j):
             frames.append(img_list[i + 1])
 
-    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
 
 
@@ -212,7 +212,7 @@ def zoom_in_animation(img, W, H, opencv_bbox, fps = 30, duration = 1):
                 
     writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
     
 
@@ -234,7 +234,7 @@ def fade_animation(img_list, w, h, output_path, fps=30, effect_speed=2, duration
             
     writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
     for frame in frames:
-      writer.write(frame) #write frame into output vid
+      writer.write(frame)  # write frame into output vid
     writer.release()
 
 

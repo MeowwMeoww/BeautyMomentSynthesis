@@ -96,7 +96,7 @@ def parse_args():
 
 
 def main():
-  try:
+
     start = time.time()
     args = parse_args()
     
@@ -117,12 +117,19 @@ def main():
     input_paths, input_names = return_paths(args.original_dataset_path, 'input')
     anchor_paths, anchor_labels = return_paths(args.anchor_dataset_path, 'anchor')
 
+    people_in_anchor = np.unique(anchor_labels).tolist()
+    check_if_exist = [person in people_in_anchor for person in finding_names]
+
+    if False in check_if_exist:
+      raise Exception("Don't have the people you're finding in your anchor dataset")
+
     mtcnn, infer_model = create_facenet_models()
-    fiqa_net = FIQA_network()
+    FIQA_net = FIQA_network()
     print('-----Initializing FIQA and FaceNet models-----')
 
-    if fiqa_net and mtcnn and infer_model is not None:
+    if FIQA_net and mtcnn and infer_model is not None:
         print('-----Done initialized FIQA and FaceNet models-----')
+
         log = write_log(old_log=log,
                         new_message="-----Done initialized FIQA and FaceNet models-----",
                         type="string + enter")
@@ -133,18 +140,27 @@ def main():
     for batch_index in range(len(input_paths)):
       df, input_img = face_detection(input_paths[batch_index], input_names[batch_index], anchor_paths, anchor_labels, mtcnn, infer_model, finding_names)
 
-      try:
+      log = write_log(old_log = log,
+                      new_message = 'Dataframe after face detection',
+                      type = "string + enter")
+
+      log = write_log(old_log = log,
+                      new_message = df,
+                      type = "dataframe + enter")
+
+      if input_img:
         torch.cuda.empty_cache()
         df, input_img = FIQA(df, input_img, fiqa_net)
         df, input_img = get_smile_score(df, input_img)
         append_df.append(df)
 
         log = write_log(old_log = log,
-                new_message = df,
-                type = "dataframe + enter")
+                        new_message = 'Dataframe after FIQA + Smile Score',
+                        type = "string + enter")
 
-      except:
-        pass
+        log = write_log(old_log = log,
+                        new_message = df,
+                        type = "dataframe + enter")
 
       log = write_log(old_log = log,
                       new_message = "-----Finished batch {} -----".format(batch_index + 1),
@@ -163,10 +179,10 @@ def main():
                     new_message="Processing DataFrame",
                     type="string + enter")
 
-    try:
-      df_final = pd.concat(append_df)
-    except:
+    if not append_df:
       raise Exception("Can't find any images")
+
+    df_final = pd.concat(append_df)
 
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
     df_final.reset_index(drop = True)
@@ -229,10 +245,7 @@ def main():
     log = write_log(old_log=log,
                     new_message= "DONE. Total time: {0:.4g} ".format(end-start),
                     type="string + enter")
-  except:
-    pass
 
-  finally:
     if args.log:
         log_final(log)
 

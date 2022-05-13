@@ -19,8 +19,8 @@ import shutil
 
 
 def random_number():
-    numb = random.randint(0, 1000)
-    return numb % 6	
+    numb = random.randint(0, 6)
+    return numb
 
 
 def initialize_video(image, W, H, effect_speed, fps, duration):

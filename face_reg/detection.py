@@ -13,6 +13,8 @@ from numpy.linalg import norm
 from collections import Counter
 from config import *
 from misc.utils import *
+from misc.log import *
+
 
 def read_image_from_path(path):
     img = cv2.imread(path, 1)
@@ -73,7 +75,7 @@ def read_images(paths, purpose):
       img_resized_list = img_list.copy()
 
     else:
-      img_resized_list = resize_images(img_list, purpose) #img_list o dang list
+      img_resized_list = resize_images(img_list, purpose)  # img_list o dang list
 
     return img_list, img_resized_list, shape_check
 
@@ -353,7 +355,7 @@ def clipping_boxes(img_list, boxes):
     return box_clipping
 
 
-def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, purpose = None):
+def cropping_face(img_list, box_clipping, purpose, percent = CFG_REG.CROP.EXTEND_RATE):
     def crop_with_percent(img, box, rate = 0):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
@@ -361,12 +363,14 @@ def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, pu
         x_right += rate * (x_right - x_left)
         y_top -= rate * (y_bot - y_top)
         y_bot += rate * (y_bot - y_top)
+
         target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
+        target_img = np.array(target_img).astype('int16')
 
-        target_img = cv2.resize(target_img, tuple(CFG_REG.CROP.FACE_SIZE),
-                                interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
+        while (target_img.shape[-3]) < 100 or (target_img.shape[-2]) < 100:
+            target_img = cv2.resize(target_img, None, fx = 1.5, fy = 1.5, interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
-        return np.array(target_img).astype('int16')
+        return target_img
 
     if purpose == 'input':
         cropped_faces = []
@@ -377,44 +381,36 @@ def cropping_face(img_list, box_clipping, percent = CFG_REG.CROP.EXTEND_RATE, pu
                 cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[img_index])))
 
     elif purpose == 'anchor':
-        cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], percent) for img_index in range(len(img_list))]  # cần fix lại
+        cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], percent) for img_index in range(len(img_list))]
 
     return cropped_faces
 
 
-def vector_embedding(infer_model, img_list, purpose = 'input'):
+def vector_embedding(infer_model, img_list, purpose):
     device = config.DEVICE
 
-    def extract_vector(batch):
-        batch = batch.to(device)
-        embed = infer_model(batch)
+    def extract_vector(img):
+        if len(img.size()) == 3:
+            img = torch.unsqueeze(img, 0)
+
+        img = img.to(device)
+        embed = infer_model(img)
         embed = embed.cpu().detach().numpy()
         return embed
 
+    vector_embeddings = []
     if purpose == 'anchor':
         img_list = list(map(transform, img_list))
-        img_list = torch.stack(img_list, dim = 0)
-
-        batch_size = CFG_REG.BATCH_SIZE
-        steps = math.ceil(len(img_list) / batch_size)
-        img_list = torch.split(img_list, steps)
 
         vector_embeddings = list(map(extract_vector, img_list))
         vector_embeddings = np.concatenate(vector_embeddings).reshape(-1, 512)
 
     elif purpose == 'input':
-        vector_embeddings = []
-
-        for img in img_list:
-            mini_list = list(map(transform, img))
-            mini_list = torch.stack(mini_list, dim = 0)
-            embedding = extract_vector(mini_list)
-
-            if embedding.shape[0] > 1:
-                embedding = np.concatenate(embedding).reshape(-1, 512)
-
+        for image in img_list:
+            mini_list = list(map(transform, image))
+            embedding = [extract_vector(mini) for mini in mini_list]
+            embedding = np.concatenate(embedding).reshape(-1, 512)
             embedding = list(embedding)
-
             vector_embeddings.append(embedding)
 
     return vector_embeddings
@@ -576,14 +572,16 @@ def clear_results(images, scores, img_names, boxes, ids, paths, person = None):
     new_boxes = list(filter(None, boxes))
     new_ids = list(filter(None, ids))
 
-    new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
+    if new_scores:
+      new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
+
     images = [images[img_index] for img_index in keep_img]
     paths = [paths[path_index] for path_index in keep_img]
 
     df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores, 'paths': paths})
     df_new = df_new.reset_index(drop = True)
 
-    return df_new, np.array(images)
+    return df_new, images
 
 
 def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn, infer_model, finding_name):
@@ -620,25 +618,28 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
     anchor_boxes = clipping_boxes(anchor_img, anchor_boxes)
 
     if not input_shape_flag:
-      input_boxes = rescale_bboxes(input_boxes, input_img_resized, input_img)
+        input_boxes = rescale_bboxes(input_boxes, input_img_resized, input_img)
     del input_img_resized
 
     input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
     anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
 
-    try:
-      cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, purpose = 'anchor')
-      cropped_img_input = cropping_face(input_img, input_boxes, purpose = 'input')
+    if input_paths:
+        cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, 'anchor')
+        cropped_img_input = cropping_face(input_img, input_boxes, 'input')
 
-      anchor_embed = vector_embedding(infer_model, cropped_img_anchor, purpose = 'anchor')
-      input_embed = vector_embedding(infer_model, cropped_img_input, purpose = 'input')
+        anchor_embed = vector_embedding(infer_model, cropped_img_anchor, 'anchor')
+        input_embed = vector_embedding(infer_model, cropped_img_input, 'input')
 
-      final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
+        final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-      df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
-                                    boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
+        df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
+                                      boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
 
-      return df, input_img
+        return df, input_img
 
-    except:
-      return None, None
+    else:
+        df = pd.DataFrame(columns = ['filename', 'bboxes', 'ids', 'face scores', 'paths'])
+        input_img = []
+
+    return df, input_img
