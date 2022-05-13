@@ -96,7 +96,7 @@ def parse_args():
 
 
 def main():
-  try:
+
     start = time.time()
     args = parse_args()
     
@@ -155,7 +155,7 @@ def main():
         append_df.append(df)
 
         log = write_log(old_log = log,
-                        new_message = 'Dataframe after FIQA + smile score',
+                        new_message = 'Dataframe after FIQA + Smile Score',
                         type = "string + enter")
 
         log = write_log(old_log = log,
@@ -181,6 +181,7 @@ def main():
 
     if not append_df:
       raise Exception("Can't find any images")
+
     df_final = pd.concat(append_df)
 
     df_final.sort_values(by = 'smile score average', ascending = False, inplace = True)
@@ -245,10 +246,6 @@ def main():
                     new_message= "DONE. Total time: {0:.4g} ".format(end-start),
                     type="string + enter")
 
-  except Exception as e:
-    print(e)
-
-  finally:
     if args.log:
         log_final(log)
 

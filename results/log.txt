@@ -1,0 +1,9 @@
+Filtered beauty moment video generator 
+2022-05-12
+00:45:32: 
+People we need to identify: ['VuHaiQuan', 'VoVanKhang']
+
+2022-05-12
+00:45:32: 
+Used device: cpu
+

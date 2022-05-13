@@ -20,13 +20,8 @@ def get_smile_score(df, img_list):
         faces_smile_scores = []
 
         for cropped_face in input_data:
-            cropped_face = cropped_face[..., ::-1].copy() #RGB --> BGR
-
-            try:
-                predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], detector_backend = 'mtcnn', enforce_detection = False)
-            except:
-                predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], detector_backend = 'retinaface', enforce_detection = False)
-
+            cropped_face = cropped_face[..., ::-1].copy()  # RGB --> BGR
+            predictions = DeepFace.analyze(cropped_face, actions = ['emotion'], detector_backend = 'mtcnn', enforce_detection = False)
             faces_smile_scores.append(predictions['emotion']['happy'])
 
         smile_scores.append([[score] for score in faces_smile_scores])
