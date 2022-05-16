@@ -14,7 +14,7 @@ from collections import Counter
 from config import *
 from misc.utils import *
 from misc.log import *
-
+from PIL import Image
 
 def read_image_from_path(path):
     img = cv2.imread(path, 1)
