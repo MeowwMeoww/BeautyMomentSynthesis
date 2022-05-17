@@ -103,7 +103,7 @@ def get_target_bbox(img, bboxes, p=0.1):
     data = []
     for bbox in bboxes:
         bbox = convert_bounding_box(box=bbox, input_type="opencv", change_to="coco")
-        x, y = int(bbox[0]), int(bbox[1])  # top-left x, y corrdinates
+        x, y = int(bbox[0]), int(bbox[1])  # top-left x, y coordinates
         w, h = int(bbox[2]), int(bbox[3])  # w, h values
 
         if y - int(p * w) < 0 or x - int(p * h) < 0 or y + int(p * w) > img.shape[0] or y + int(p * w) > img.shape[1] \

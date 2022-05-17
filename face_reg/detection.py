@@ -110,8 +110,6 @@ def create_facenet_models():
         device = device, selection_method = 'largest_over_threshold'
     )
 
-    mtcnn.keep_all = False
-
     return mtcnn, infer_model
 
 
@@ -394,10 +392,10 @@ def cropping_face(img_list, box_clipping, landmarks, purpose):
     def crop_with_percent(img, box, facial_landmark, rate = CFG_REG.CROP.EXTEND_RATE):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
-        x_left -= rate * (x_right - x_left)
-        x_right += rate * (x_right - x_left)
-        y_top -= rate * (y_bot - y_top)
-        y_bot += rate * (y_bot - y_top)
+      #  x_left -= rate * (x_right - x_left)
+      #  x_right += rate * (x_right - x_left)
+      #  y_top -= rate * (y_bot - y_top)
+      #  y_bot += rate * (y_bot - y_top)
 
         target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
         target_img = np.array(target_img).astype('int16')
