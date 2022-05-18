@@ -5,6 +5,120 @@ import numpy as np
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 
+def convert_bounding_box(box, input_type, change_to):
+    """
+        This function converts an input bounding box to either YOLO, COCO, or OpenCV
+        format.
+        However, the function only converts the input bounding box if it already belongs
+        to one of the three formats listed above.
+        Note:
+        + OpenCV-formatted bounding box has 4 elements [x_left, y_top, x_right, y_bot]
+        + YOLO-formatted bounding box has 4 elements [x_center, y_center, width, height]
+        + COCO-formatted bounding box has 4 elements [x_left, y_top, width, height]
+        Parameters
+        ----------
+        + box: list.
+            The provided bounding box in the Python list format. The given bounding box
+            must have 4 elements, corresponding to its format.
+        + input_type: {'opencv', 'yolo', 'coco'}
+            The format of the input bounding box.
+            Supported values are 'yolo' - for YOLO format, 'coco' - for COCO format,
+            and 'opencv' - for OpenCV format.
+        + change_to: {'opencv', 'yolo', 'coco'}.
+            The type of format to convert the input bounding box to.
+            Supported values are 'yolo' - for YOLO format, 'coco' - for COCO format,
+            and 'opencv' - for OpenCV format.
+        Return
+        ----------
+            Returns a list for the converted bounding box.
+    """
+    assert (type(box) == list), 'The provided bounding box must be a Python list'
+    assert (len(box) == 4), 'Must be a bounding box that has 4 elements: [x_left, y_top, x_right, y_bot] (OpenCV format)'
+    assert (input_type == 'yolo' or input_type == 'coco' or input_type == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format of your input bounding box"
+    assert (change_to == 'yolo' or change_to == 'coco' or change_to == 'opencv'), "Must select either 'yolo', 'coco', or 'opencv' as a format you want to convert the input bounding box to"
+    assert (input_type != change_to), "The format of your input bounding box must be different from your output bounding box."
+
+    if input_type == 'opencv':
+        x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]
+
+        if change_to == 'yolo':
+            x_center = int((x_left + x_right) / 2)
+            y_center = int((y_top + y_bot) / 2)
+            width = int(x_right - x_left)
+            height = int(y_bot - y_top)
+
+            return [x_center, y_center, width, height]
+
+        elif change_to == 'coco':
+            width = int(x_right - x_left)
+            height = int(y_bot - y_top)
+
+            return [x_left, y_top, width, height]
+
+    elif input_type == 'yolo':
+        x_center, y_center, width, height = box[0], box[1], box[2], box[3]
+
+        if change_to == 'opencv':
+            x_left = int(x_center - width / 2)
+            x_right = int(x_center + width / 2)
+            y_top = int(y_center - height / 2)
+            y_bot = int(y_center + height / 2)
+
+            return [x_left, x_right, y_top, y_bot]
+
+        elif change_to == 'coco':
+            x_left = int(x_center - width / 2)
+            y_top = int(y_center - height / 2)
+
+            return [x_left, y_top, width, height]
+
+    elif input_type == 'coco':
+        x_left, y_top, width, height = box[0], box[1], box[2], box[3]
+
+        if change_to == 'opencv':
+            x_right = int(x_left + width)
+            y_bot = int(y_top + height)
+
+            return [x_left, x_right, y_top, y_bot]
+
+        elif change_to == 'yolo':
+            x_center = int(x_left + width / 2)
+            y_center = int(y_top + height / 2)
+
+            return [x_center, y_center, width, height]
+        
+        
+def get_target_bbox(img, bboxes, p=0.1):
+    """
+        This function extracts bounding boxes from an image.
+        Parameters
+        ----------
+        + img: numpy array.
+            Values of an image (an array of 3 channels).
+        + bboxes: list.
+            The list of opencv formatted bounding boxes.
+        + p: float.
+            The coefficient that is used to extend the width and height of the bounding box.
+        Return
+        ----------
+            Returns a list of bounding boxes values in the given image.
+    """
+    
+    data = []
+    for bbox in bboxes:
+        bbox = convert_bounding_box(box=bbox, input_type="opencv", change_to="coco")
+        x, y = int(bbox[0]), int(bbox[1])  # top-left x, y corrdinates
+        w, h = int(bbox[2]), int(bbox[3])  # w, h values
+
+        if y - int(p * w) < 0 or x - int(p * h) < 0 or y + int(p * w) > img.shape[0] or y + int(p * w) > img.shape[1] \
+                or x + int(p * w) > img.shape[1] or x + int(p * w) > img.shape[0]:
+            data.append(img[y:y + w, x:x + h])
+        else:
+            data.append(img[y - int(p * w):y + w + int(p * w), x - int(p * h):x + h + int(p * h)])  # target box
+
+    return data
+
+
 def process_images_for_vid(img_list, effect_speed, duration, fps, fraction=1):
     h = []
     w = []
@@ -188,7 +302,7 @@ def extract_final_H(opencv_bbox, W, H):
     return M
     
     
-def zoom_in_animation(img, W, H, opencv_bbox, fps = 30, duration = 1): 
+def zoom_animation(img, output_path, W, H, opencv_bbox, fps = 30, duration = 1): 
     
     # x, y, w, h = convert_bounding_box(box=open_cv_bbox, input_type="opencv", change_to="coco")
     final_H = np.matrix.round(extract_final_H(opencv_bbox=opencv_bbox, W=W, H=H), decimals=5, out=None)
@@ -196,7 +310,7 @@ def zoom_in_animation(img, W, H, opencv_bbox, fps = 30, duration = 1):
     frames = []
     
     j=0
-    f = duration*fps
+    f = int(3*(duration*fps+1)/7)
     for k in range(0, f+1, 1):
         result = img.copy()
         
@@ -209,12 +323,72 @@ def zoom_in_animation(img, W, H, opencv_bbox, fps = 30, duration = 1):
 
         frames.append(result)
         j += 1
-                
-    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w,h))
+    
+    for k in range(f, 1, -1):
+        result = img.copy()
+        
+        _H = np.array([[1+k*(final_H[0][0]-1)/f, 0, k*(final_H[0][2])/f],
+                      [0, 1+k*(final_H[1][1]-1)/f, k*(final_H[1][2])/f],
+                      [0, 0, 1]]
+                    )
+        
+        result = cv2.warpPerspective(img, _H, (W, H), flags=cv2.INTER_LINEAR)
+
+        frames.append(result)
+        j += 1
+
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (W, H))
     for frame in frames:
       writer.write(frame)  # write frame into output vid
     writer.release()
     
+
+def rotate_animation(img, output_path, W, H, opencv_bbox, fps = 30, duration = 1): 
+    
+    # x, y, w, h = convert_bounding_box(box=open_cv_bbox, input_type="opencv", change_to="coco")
+    final_H = np.matrix.round(extract_final_H(opencv_bbox=opencv_bbox, W=W, H=H), decimals=5, out=None)
+    
+    frames = []
+    
+    j=0
+    f = int(3*(duration*fps+1)/7)
+    for k in range(1, f+1, 1):
+        result = img.copy()        
+        
+        x_center, y_center, _, _ = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="yolo")
+
+        _R = cv2.getRotationMatrix2D(center=(x_center, y_center), angle=360*k/f, scale=1)
+        result = cv2.warpAffine(src=img, M=_R, dsize=(W, H))
+        _H = np.array([[(1+k*(final_H[0][0]-1)/f), 0, k*(final_H[0][2])/f],
+                      [0,1+k*(final_H[1][1]-1)/f, k*(final_H[1][2])/f],
+                      [0, 0, 1]]
+                    )
+        result = cv2.warpPerspective(result, _H, (W, H), flags=cv2.INTER_LINEAR)
+        
+        frames.append(result)
+        j += 1
+    
+    for k in range(f, 1, -1):
+        result = img.copy()        
+        
+        x_center, y_center, _, _ = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="yolo")
+
+        _R = cv2.getRotationMatrix2D(center=(x_center, y_center), angle=360*k/f, scale=1)
+        result = cv2.warpAffine(src=img, M=_R, dsize=(W, H))
+        _H = np.array([[(1+k*(final_H[0][0]-1)/f), 0, k*(final_H[0][2])/f],
+                      [0,1+k*(final_H[1][1]-1)/f, k*(final_H[1][2])/f],
+                      [0, 0, 1]]
+                    )
+        result = cv2.warpPerspective(result, _H, (W, H), flags=cv2.INTER_LINEAR)
+        
+        frames.append(result)
+        j += 1
+
+    writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (W, H))
+    for frame in frames:
+      writer.write(frame)  # write frame into output vid
+    writer.release()
+
 
 def fade_animation(img_list, w, h, output_path, fps=30, effect_speed=2, duration=1):
     
