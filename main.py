@@ -14,7 +14,6 @@ from misc.utils import *
 import warnings
 warnings.filterwarnings('ignore')
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='Face Detection and Recognition',
                                      usage='A module to detect and recognize faces in pictures')
