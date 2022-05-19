@@ -252,14 +252,13 @@ def convert_bounding_box(box, input_type, change_to):
 
     elif input_type == 'yolo':
         x_center, y_center, width, height = box[0], box[1], box[2], box[3]
-
         if change_to == 'opencv':
-            x_left = int(x_center - width / 2)
-            x_right = int(x_center + width / 2)
-            y_top = int(y_center - height / 2)
-            y_bot = int(y_center + height / 2)
+            x_left = int(x_center - (width/2))
+            x_right = int(x_center + (width/2))
+            y_top = int(y_center - (height/2))
+            y_bot = int(y_center + (height/2))
 
-            return [x_left, x_right, y_top, y_bot]
+            return [x_left, y_top, x_right, y_bot]
 
         elif change_to == 'coco':
             x_left = int(x_center - width / 2)
@@ -274,7 +273,7 @@ def convert_bounding_box(box, input_type, change_to):
             x_right = int(x_left + width)
             y_bot = int(y_top + height)
 
-            return [x_left, x_right, y_top, y_bot]
+            return [x_left, y_top, x_right, y_bot]
 
         elif change_to == 'yolo':
             x_center = int(x_left + width / 2)
