@@ -62,7 +62,7 @@ def find_inner_animation_images(df, names):
 
     for idx in range(len(df)):
         for i in range(len(df["ids"][idx])):
-            if df["fiqa score"][idx][i] > best_fiqa_scores[df["ids"][idx][i]][1]:
+            if df["fiqa scores"][idx][i] > best_fiqa_scores[df["ids"][idx][i]][1]:
                 best_fiqa_scores[df["ids"][idx][i]][1] = df["bboxes"][idx][i]
                 best_fiqa_scores[df["ids"][idx][i]][0] = idx
 
