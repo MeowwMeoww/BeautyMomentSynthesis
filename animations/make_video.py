@@ -1,6 +1,5 @@
 import os
 
-from cv2 import rotate
 from animations.animations import process_images_for_vid as process
 from animations.animations import cover_animation as cover
 from animations.animations import uncover_animation as uncover
@@ -12,8 +11,7 @@ from animations.animations import extract_vid as vid
 from animations.animations import zoom_animation as zoom
 from animations.animations import rotate_animation as rot
 import pandas as pd
-#from animations.animations import extract_vid as vid
-#from animations.animations import extract_vid as vid
+from misc.extract_bbox import zoom_rescale_bbox
 
 import random
 from tqdm import tqdm
@@ -107,7 +105,8 @@ def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3
     for i in tqdm(range(len(img_list) - 1)):
         if info_df["filename"][i] in animated_filenames:
             idx = animated_filenames.index(info_df["filename"][i])
-            inner_animation[random.randint(0, 1)](img=img_list[i], output_path="tmp/inner_{}.mp4".format(i), W=w, H=h, opencv_bbox=bboxes[idx], fps = fps, duration = int(2*duration/3))
+            bbox = zoom_rescale_bbox(opencv_bbox=bboxes[idx], W=w, H=h)
+            inner_animation[random.randint(0, 1)](img=img_list[i], output_path="tmp/inner_{}.mp4".format(i), W=w, H=h, opencv_bbox=bbox, fps = fps, duration = int(2*duration/3))
             vid_paths.append("tmp/inner_{}.mp4".format(i))
 
         animation[random_number()](img_list=img_list[i:i + 2], w=w, h=h,
