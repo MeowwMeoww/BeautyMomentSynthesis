@@ -105,7 +105,7 @@ def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3
     for i in tqdm(range(len(img_list) - 1)):
         if info_df["filename"][i] in animated_filenames:
             idx = animated_filenames.index(info_df["filename"][i])
-            bbox = zoom_rescale_bbox(opencv_bbox=bboxes[idx], W=w, H=h)
+            s, bbox = zoom_rescale_bbox(opencv_bbox=bboxes[idx], W=w, H=h)
             inner_animation[random.randint(0, 1)](img=img_list[i], output_path="tmp/inner_{}.mp4".format(i), W=w, H=h, opencv_bbox=bbox, fps = fps, duration = int(2*duration/3))
             vid_paths.append("tmp/inner_{}.mp4".format(i))
 

@@ -286,6 +286,7 @@ def split_animation(img_list, w, h, output_path, fps=30, effect_speed=2, duratio
 
 
 def extract_final_H(opencv_bbox, W, H):
+    print(opencv_bbox)
     x, y, w, h = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="coco")
     
     # All points are in format [cols, rows]

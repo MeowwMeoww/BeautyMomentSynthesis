@@ -133,7 +133,7 @@ def zoom_rescale_bbox(opencv_bbox, W, H):
     
     # input: coco_bbox -> output: opencv_bbox
     x_top, x_bot, y_top, y_bot = opencv_bbox
-    _, _, w, h = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="opencv")
+    _, _, w, h = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="coco")
     if h >= w:
         S = H/h  # scale
         _w = int(W/S)
