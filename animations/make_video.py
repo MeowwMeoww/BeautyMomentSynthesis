@@ -99,7 +99,6 @@ def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3
     os.mkdir("tmp")
 
     animated_filenames, bboxes = find_inner_animation_images(info_df, names)
-    print(animated_filenames, bboxes)
 
     img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
     initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)
