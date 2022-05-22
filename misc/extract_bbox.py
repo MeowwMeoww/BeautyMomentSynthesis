@@ -115,7 +115,7 @@ def get_target_bbox(img, bboxes, p=0.1):
     return data
 
 
-def zoom_rescale_bbox(coco_bbox, W, H):
+def zoom_rescale_bbox(opencv_bbox, W, H):
     """
         This function returns a new opencv formatted bounding box output that fits the width-height ratio of the initial image.
         Parameters
@@ -132,8 +132,8 @@ def zoom_rescale_bbox(coco_bbox, W, H):
     """
     
     # input: coco_bbox -> output: opencv_bbox
-    _, _, w, h = coco_bbox
-    x_top, x_bot, y_top, y_bot = convert_bounding_box(box=coco_bbox, input_type="coco", change_to="opencv")
+    x_top, x_bot, y_top, y_bot = opencv_bbox
+    _, _, w, h = convert_bounding_box(box=opencv_bbox, input_type="opencv", change_to="coco")
     if h >= w:
         S = H/h  # scale
         _w = int(W/S)
