@@ -11,6 +11,7 @@ from animations.animations import fade_animation as fade
 from animations.animations import extract_vid as vid
 from animations.animations import zoom_animation as zoom
 from animations.animations import rotate_animation as rot
+import pandas as pd
 #from animations.animations import extract_vid as vid
 #from animations.animations import extract_vid as vid
 
@@ -58,20 +59,23 @@ def initialize_video(image, W, H, effect_speed, fps, duration):
 def find_inner_animation_images(df, names):
     best_fiqa_scores = dict.fromkeys(names)
     for name in names:
-        best_fiqa_scores[name] = [-1, []]
+        best_fiqa_scores[name] = [-1, -1, -1]
 
     for idx in range(len(df)):
         for i in range(len(df["ids"][idx])):
-            if df["fiqa score"][idx][i] > best_fiqa_scores[df["ids"][idx][i]][1]:
-                best_fiqa_scores[df["ids"][idx][i]][1] = df["bboxes"][idx][i]
-                best_fiqa_scores[df["ids"][idx][i]][0] = idx
+            if int(df["fiqa scores"][idx][i][0]) > best_fiqa_scores[df["ids"][idx][i][0]][2]:
+                best_fiqa_scores[df["ids"][idx][i][0]][1] = df["bboxes"][idx][i]
+                best_fiqa_scores[df["ids"][idx][i][0]][0] = df["filename"][idx]
+                best_fiqa_scores[df["ids"][idx][i][0]][2] = df["fiqa scores"][idx][i][0]
 
-    idxes = []
+    filenames = []
     bboxes = []
     for i in best_fiqa_scores.values():
-        idxes.append(i[0])
+        filenames.append(i[0])
         bboxes.append(i[1])
-    return best_fiqa_scores
+
+    print(best_fiqa_scores)
+    return filenames, bboxes
 
 
 def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3, fps=30, fraction=1):
@@ -89,18 +93,22 @@ def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3
         1: rot,
     }
 
+    info_df = pd.DataFrame(data=info_df).reset_index(drop=True)
+    print(info_df)
+
     os.mkdir("tmp")
 
-    idxes, bboxes = find_inner_animation_images(info_df, names)
+    animated_filenames, bboxes = find_inner_animation_images(info_df, names)
+    print(animated_filenames, bboxes)
 
     img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
     initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)
     vid_paths = ["tmp/tmp_0.mp4"]
     
     for i in tqdm(range(len(img_list) - 1)):
-        if i in idxes:
-            idx = idxes.index(i)
-            inner_animation[random.randint(0, 1)](img=img_list[0], output_path="tmp/inner_{}.mp4".format(i), W=w, H=h, opencv_bbox=bboxes[idx], fps = fps, duration = int(2*duration/3))
+        if info_df["filename"][i] in animated_filenames:
+            idx = animated_filenames.index(info_df["filename"][i])
+            inner_animation[random.randint(0, 1)](img=img_list[i], output_path="tmp/inner_{}.mp4".format(i), W=w, H=h, opencv_bbox=bboxes[idx], fps = fps, duration = int(2*duration/3))
             vid_paths.append("tmp/inner_{}.mp4".format(i))
 
         animation[random_number()](img_list=img_list[i:i + 2], w=w, h=h,
