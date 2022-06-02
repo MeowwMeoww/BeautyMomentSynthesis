@@ -16,6 +16,7 @@ from misc.utils import *
 from misc.log import *
 from PIL import Image
 
+
 def read_image_from_path(path):
     img = cv2.imread(path, 1)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

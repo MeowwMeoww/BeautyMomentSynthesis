@@ -15,6 +15,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Face Detection and Recognition',
                                      usage = 'A module to detect and recognize faces in pictures')
@@ -224,7 +225,9 @@ def main():
         input_img = visualizing_bounding_boxes(df_final, input_img_resized)
         del input_img_resized
 
-    make_video(img_list = input_img,
+    make_video(info_df = df_final,
+               names = finding_names,
+               img_list = input_img,
                output_path = args.output_path,
                effect_speed = args.effect_speed,
                duration = args.duration,
@@ -251,3 +254,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
