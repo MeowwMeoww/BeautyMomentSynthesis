@@ -14,6 +14,7 @@ from collections import Counter
 from config import *
 from misc.utils import *
 from misc.log import *
+from PIL import Image
 
 
 def read_image_from_path(path):
@@ -109,8 +110,6 @@ def create_facenet_models():
         thresholds = [0.7, 0.7, 0.8], post_process = False,
         device = device, selection_method = 'largest_over_threshold'
     )
-
-    mtcnn.keep_all = False
 
     return mtcnn, infer_model
 
@@ -254,14 +253,13 @@ def convert_bounding_box(box, input_type, change_to):
 
     elif input_type == 'yolo':
         x_center, y_center, width, height = box[0], box[1], box[2], box[3]
-
         if change_to == 'opencv':
-            x_left = int(x_center - width / 2)
-            x_right = int(x_center + width / 2)
-            y_top = int(y_center - height / 2)
-            y_bot = int(y_center + height / 2)
+            x_left = int(x_center - (width/2))
+            x_right = int(x_center + (width/2))
+            y_top = int(y_center - (height/2))
+            y_bot = int(y_center + (height/2))
 
-            return [x_left, x_right, y_top, y_bot]
+            return [x_left, y_top, x_right, y_bot]
 
         elif change_to == 'coco':
             x_left = int(x_center - width / 2)
@@ -276,7 +274,7 @@ def convert_bounding_box(box, input_type, change_to):
             x_right = int(x_left + width)
             y_bot = int(y_top + height)
 
-            return [x_left, x_right, y_top, y_bot]
+            return [x_left, y_top, x_right, y_bot]
 
         elif change_to == 'yolo':
             x_center = int(x_left + width / 2)
@@ -298,15 +296,16 @@ def transform(img):
     return normalized(img)
 
 
-def filter_images(name, img_list, boxes, paths):
+def filter_images(name, img_list, boxes, paths, landmarks):
     keep_index = [index for index, box in enumerate(boxes) if box[0] != [None]]
 
     img_final = [img_list[index] for index in keep_index]
+    landmarks_final = [landmarks[i] for i in keep_index]
     paths_final = [paths[index] for index in keep_index]
     box_list_final = [boxes[index] for index in keep_index]
     name_final = [name[index] for index in keep_index]
 
-    return np.array(img_final), box_list_final, name_final, paths_final
+    return np.array(img_final), box_list_final, name_final, paths_final, landmarks_final
 
 
 def clipping_boxes(img_list, boxes):
@@ -355,20 +354,55 @@ def clipping_boxes(img_list, boxes):
     return box_clipping
 
 
-def cropping_face(img_list, box_clipping, purpose, percent = CFG_REG.CROP.EXTEND_RATE):
-    def crop_with_percent(img, box, rate = 0):
+def alignment_procedure(img, landmark):
+    left_eye = landmark[0]
+    right_eye = landmark[1]
+    left_eye_x, left_eye_y = left_eye
+    right_eye_x, right_eye_y = right_eye
+
+    if left_eye_y < right_eye_y:
+        point_3rd = (right_eye_x, left_eye_y)
+        direction = -1
+    else:
+        point_3rd = (left_eye_x, right_eye_y)
+        direction = 1
+
+    a = norm(np.array(left_eye) - np.array(point_3rd))
+    b = norm(np.array(right_eye) - np.array(point_3rd))
+    c = norm(np.array(right_eye) - np.array(left_eye))
+
+    if b != 0 and c != 0:
+
+        cos_a = (b ** 2 + c ** 2 - a ** 2) / (2 * b * c)
+        angle = np.arccos(cos_a)
+        angle = math.degrees(angle)
+
+        if direction == 1:
+            angle = - angle
+        else:
+            angle = (90 - angle)
+
+        img = Image.fromarray(img.astype(np.uint8))
+        img = np.array(img.rotate(direction * angle, resample = Image.BICUBIC)).astype('int16')
+
+    return img
+
+
+def cropping_face(img_list, box_clipping, landmarks, purpose):
+    def crop_with_percent(img, box, facial_landmark, rate = CFG_REG.CROP.EXTEND_RATE):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
 
-        x_left -= rate * (x_right - x_left)
-        x_right += rate * (x_right - x_left)
-        y_top -= rate * (y_bot - y_top)
-        y_bot += rate * (y_bot - y_top)
+      #  x_left -= rate * (x_right - x_left)
+      #  x_right += rate * (x_right - x_left)
+      #  y_top -= rate * (y_bot - y_top)
+      #  y_bot += rate * (y_bot - y_top)
 
         target_img = img[int(y_top): int(y_bot), int(x_left): int(x_right)]
         target_img = np.array(target_img).astype('int16')
+        target_img = alignment_procedure(target_img, facial_landmark)
 
         while (target_img.shape[-3]) < 100 or (target_img.shape[-2]) < 100:
-            target_img = cv2.resize(target_img, None, fx = 1.5, fy = 1.5, interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
+            target_img = cv2.resize(target_img, None, fx = 1.25, fy = 1.25, interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return target_img
 
@@ -378,10 +412,10 @@ def cropping_face(img_list, box_clipping, purpose, percent = CFG_REG.CROP.EXTEND
             if len(box_clipping[img_index]) >= 1:
                 img_list_map = np.expand_dims(img_list[img_index], axis = 0)
                 img_list_map = np.repeat(img_list_map, repeats = len(box_clipping[img_index]), axis = 0)
-                cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[img_index])))
+                cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[img_index], landmarks[img_index])))
 
     elif purpose == 'anchor':
-        cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], percent) for img_index in range(len(img_list))]
+        cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], landmarks[img_index][0], img_index) for img_index in range(len(img_list))]
 
     return cropped_faces
 
@@ -611,8 +645,8 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
     input_img, input_img_resized, input_shape_flag = read_images(input_paths, purpose = 'input')
     _, anchor_img, _ = read_images(anchor_paths, purpose = 'anchor')
 
-    input_boxes, _, _ = get_bounding_box(mtcnn, input_img_resized, CFG_REG.BATCH_SIZE)
-    anchor_boxes, _, _ = get_bounding_box(mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
+    input_boxes, _, input_landmarks = get_bounding_box(mtcnn, input_img_resized, CFG_REG.BATCH_SIZE)
+    anchor_boxes, _, anchor_landmarks = get_bounding_box(mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
 
     input_boxes = clipping_boxes(input_img_resized, input_boxes)
     anchor_boxes = clipping_boxes(anchor_img, anchor_boxes)
@@ -621,12 +655,12 @@ def face_detection(input_paths, input_names, anchor_paths, anchor_labels, mtcnn,
         input_boxes = rescale_bboxes(input_boxes, input_img_resized, input_img)
     del input_img_resized
 
-    input_img, input_boxes, input_names, input_paths = filter_images(input_names, input_img, input_boxes, input_paths)
-    anchor_img, anchor_boxes, anchor_label, anchor_paths = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths)
+    input_img, input_boxes, input_names, input_paths, input_landmarks = filter_images(input_names, input_img, input_boxes, input_paths, input_landmarks)
+    anchor_img, anchor_boxes, anchor_label, anchor_paths, anchor_landmarks = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths, anchor_landmarks)
 
     if input_paths:
-        cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, 'anchor')
-        cropped_img_input = cropping_face(input_img, input_boxes, 'input')
+        cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, anchor_landmarks, 'anchor')
+        cropped_img_input = cropping_face(input_img, input_boxes, input_landmarks, 'input')
 
         anchor_embed = vector_embedding(infer_model, cropped_img_anchor, 'anchor')
         input_embed = vector_embedding(infer_model, cropped_img_input, 'input')
