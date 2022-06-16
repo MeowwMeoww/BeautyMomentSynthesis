@@ -137,7 +137,7 @@ def auto_parameters(img_list, duration, fps, fraction):
         img = cv2.resize(image, (w, h))
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         images.append(img)
-    return images, w, h, effect_speed, duration, fps
+    return images, w, h, int(effect_speed), duration, fps
 
 
 def process_images_for_vid(img_list, effect_speed, duration, fps, fraction=1):
