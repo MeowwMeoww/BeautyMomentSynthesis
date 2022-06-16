@@ -119,6 +119,27 @@ def get_target_bbox(img, bboxes, p=0.1):
     return data
 
 
+def auto_parameters(img_list, duration, fps, fraction):
+    h = []
+    w = []
+
+    for image in img_list:
+        height, width, _ = image.shape
+        h.append(height)
+        w.append(width)
+
+    h = int(min(h) / fraction)
+    w = int(min(w) / fraction)    
+    effect_speed = np.floor(w/(fps*duration)) + 1
+
+    images = list()
+    for image in img_list:
+        img = cv2.resize(image, (w, h))
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        images.append(img)
+    return images, w, h, effect_speed, duration, fps
+
+
 def process_images_for_vid(img_list, effect_speed, duration, fps, fraction=1):
     h = []
     w = []

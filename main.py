@@ -53,13 +53,13 @@ def parse_args():
                         help='Video args',
                         type=int,
                         required=False,
-                        default=3)
+                        default=6)
 
     parser.add_argument('--fps',
                         help='Video args',
                         type=int,
                         required=False,
-                        default=75)
+                        default=60)
                         
     parser.add_argument('--fraction',
                         help='Resize images',
@@ -87,6 +87,12 @@ def parse_args():
 
     parser.add_argument('--visualize_boxes',
                         help='Visualizing bounding boxes in the video',
+                        type=bool,
+                        required=False,
+                        default=False)
+
+    parser.add_argument('--auto_vid_params',
+                        help='Automatically choose video params',
                         type=bool,
                         required=False,
                         default=False)
@@ -232,7 +238,8 @@ def main():
                effect_speed = args.effect_speed,
                duration = args.duration,
                fps = args.fps,
-               fraction = args.fraction)
+               fraction = args.fraction,
+               auto_param = args.auto_vid_params)
 
     end = time.time()
 

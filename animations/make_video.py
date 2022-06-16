@@ -13,6 +13,7 @@ from animations.animations import rotate_animation as rot
 import pandas as pd
 from misc.extract_bbox import zoom_rescale_bbox
 from misc.extract_bbox import convert_bounding_box
+from animations.animations import auto_parameters
 
 import random
 from tqdm import tqdm
@@ -77,7 +78,7 @@ def find_inner_animation_images(df, names):
     return filenames, bboxes
 
 
-def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3, fps=30, fraction=1):
+def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=6, fps=60, fraction=1, auto_param=False):
     animation = {
         0: cover,
         1: uncover,
@@ -98,7 +99,11 @@ def make_video(info_df, names, img_list, output_path, effect_speed=1, duration=3
 
     animated_filenames, bboxes = find_inner_animation_images(info_df, names)
 
-    img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
+    if auto_param:
+        img_list, w, h, effect_speed, duration, fps = auto_parameters(img_list, duration, fps, fraction)
+    else:
+        img_list, w, h = process(img_list, effect_speed, duration, fps, fraction=fraction)
+
     initialize_video(image=img_list[0], W=w, H=h, effect_speed=effect_speed, fps=fps, duration=duration)
     vid_paths = ["tmp/tmp_0.mp4"]
     
