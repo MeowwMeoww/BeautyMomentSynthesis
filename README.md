@@ -23,10 +23,15 @@ You give us an image folder. We will return a video of the most beautiful, most 
 
 ## How to use it
 
+- Install requirements:
+```
 
+```
 
 - Use this command:
 
 ```
-python main.py --anchor_dataset_path "test/anchor" --original_dataset_path "test/original_folder" --output_path "results/baseline_test.avi"
+python main.py --anchor_dataset_path "test/anchor" --original_dataset_path "test/original_folder" --output_path "results/baseline_test.avi" --auto_vid_params True --find_person --number_of_images --log --visualization 
 ```
+
+
