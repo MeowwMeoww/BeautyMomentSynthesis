@@ -51,17 +51,17 @@ def parse_args():
                         default = 1)
 
     parser.add_argument('--duration',
-                        help = 'Video args',
-                        type = int,
-                        required = False,
-                        default = 3)
+                        help='Video args',
+                        type=int,
+                        required=False,
+                        default=6)
 
     parser.add_argument('--fps',
-                        help = 'Video args',
-                        type = int,
-                        required = False,
-                        default = 75)
-
+                        help='Video args',
+                        type=int,
+                        required=False,
+                        default=60)
+    
     parser.add_argument('--fraction',
                         help = 'Resize images',
                         type = float,
@@ -91,6 +91,12 @@ def parse_args():
                         type = bool,
                         required = False,
                         default = False)
+
+    parser.add_argument('--auto_vid_params',
+                        help='Automatically choose video params',
+                        type=bool,
+                        required=False,
+                        default=False)
 
     args = parser.parse_args()
     return args
@@ -232,7 +238,8 @@ def main():
                effect_speed = args.effect_speed,
                duration = args.duration,
                fps = args.fps,
-               fraction = args.fraction)
+               fraction = args.fraction,
+               auto_param = args.auto_vid_params)
 
     end = time.time()
 
