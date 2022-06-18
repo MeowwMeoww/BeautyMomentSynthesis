@@ -25,27 +25,28 @@ You give us an image folder. We will return a video of the most beautiful, most 
 ```bash
 BeautyMomentSynthesis
 ├── SmileScore
-│   ├── smileScore.py
+│   └── smileScore.py
+|   |   
 ├── animations
 |   ├── animations.py
-│   ├── make_video.py
+│   └── make_video.py
 ├── face_reg
 │   ├── detection.py  
-│   ├── read_video.py
+│   └── read_video.py
 ├── flaskapp
 |   ├── static
 |   ├── templates
 |   |   ├── index.html
 |   ├── Beauty_Moment_Synthesis_API.ipynb // Python notebook for deploying the API in Google Colaboratory
 |   ├── app.py
-|   ├── requirements.txt
+|   └── requirements.txt
 ├── misc
 |   ├── extract_bbox.py
 |   ├── log.py
 |   ├── utils.py
-|   ├── visualize.py
+|   └── visualize.py
 ├── model
-|   ├── model.py
+|   └── model.py
 ├── README.md
 ├── config.py
 ├── SDD-FIQA.py
