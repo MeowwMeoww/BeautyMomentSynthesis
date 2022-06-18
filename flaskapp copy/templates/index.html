@@ -1,0 +1,89 @@
+</html>
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Beautiful Moments Synthesis</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/styles.css') }}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+  {% if not response %}
+  <div id="container">
+    <div class="formmm w3-container w3-animate-top w3-text-black">
+      <p>COTAI Final Project 
+        <br><span style="font-size: 0.8vw;">Beauty Moment Synthesis</span> 
+        <br><span style="font-size: 0.8vw;">From Cong Thinh - Hoang Phuc - Quynh Nga</span>
+        <br><span style="font-size: 0.8vw;">Direct: Mr. Nguyễn Vinh Tiệp</span>
+      </p>
+      
+      <form method="post" action="{{ url_for('handle_data') }}" enctype="multipart/form-data" id="content">
+        <h2 class="w3-center">Beautiful Moments Synthersis</h2>
+        <dl>
+          <p style="width: auto;" class="form-group">
+            <label for="anchor_file">Enter you anchor image link in Drive</label>
+            <input type="text" name="anchor_file" class="form-control" autocomplete="off" required>
+          </p>
+        </dl>
+        <dl>
+          <p style="width: auto;" class="form-group">
+            <label for="input_file">Enter you input image link in Drive</label>
+            <input type="text" name="input_file" class="form-control" autocomplete="off" required>
+          </p>
+        </dl>
+        <dl>
+          <p style="width: auto;" class="form-group">
+            <label for="names_to_find">Enter people names you want us to synthesis</label> <!-- phan cach bang ', ' -->
+            <input type="text" name="names_to_find" class="form-control" autocomplete="off" required>
+          </p>
+        </dl>
+        <dl>
+          <p style="width: auto;" class="form-group">
+            <label for="backend_url">Enter backend url</label>
+            <input type="text" name="backend_url" class="form-control" autocomplete="off" required>
+          </p>
+        </dl>
+        <p class="w3-center form-group">
+          <input type="submit" value="Submit" class="btn w3-hover-shadow w3-rounder w3-black" onclick="loading();">
+        </p>
+      </form>
+      <div id="loading">
+        <h6>Please wait...</h6>
+      </div>
+    </div>
+  </div>
+  
+  {% endif %}
+  {% if response %}
+  <div class="inresult w3-container w3-animate-top w3-text-white">
+    <!-- <span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span> -->
+    <h2 class="w3-left-align" id="result">Result:</h2>
+    <h3>Your video is ready at <a href="{{response.video_path}}">this link</a></h3>
+    <iframe src="https://giphy.com/embed/gz5BQtG0Pa4TJivgpm" width="20vw" height="20vw" frameBorder="0" class="giphy-embed" allowFullScreen></iframe>
+    <form action="{{ url_for('home') }}" enctype="multipart/form-data" >
+      <p class="w3-center form-group">
+        <input type="submit" value="Way back home" class="btn w3-hover-shadow w3-rounder w3-black" onclick="loading();">
+      </p>
+    </form>
+  </div>
+  {% endif %}
+
+  <script type="text/javascript">// <![CDATA[
+    function loading(){
+        $("#loading").show();
+        $("#content").hide();       
+    }
+// ]]</script>
+
+  
+</body>
+</html>
