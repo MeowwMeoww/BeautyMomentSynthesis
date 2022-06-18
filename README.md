@@ -20,6 +20,7 @@ This project include four main modules:
 - Smile evaluation
 - Video synthesis
 You give us an image folder. We will return a video of the most beautiful, most happy moments in your trip.
+Link presentation: https://drive.google.com/file/d/1ARZQUff1AB6bCPEb5_SQjpTgRus900VR/view?usp=sharing
 
 ## Implement
 
