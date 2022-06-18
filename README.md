@@ -21,7 +21,7 @@ This project include four main modules:
 - Video synthesis
 You give us an image folder. We will return a video of the most beautiful, most happy moments in your trip.
 
-## Technologies
+## How to use it
 
 
 
