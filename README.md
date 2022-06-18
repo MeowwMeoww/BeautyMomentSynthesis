@@ -4,7 +4,7 @@ A project aims to retain all the beautiful pictures of you and your love ones by
 ## Table of Contents
 * [Team members](#team-members)
 * [General info](#general-info)
-* [Technologies](#technologies)
+* [Implement](#implement)
 * [Setup](#setup)
 
 ## Team members
@@ -21,7 +21,7 @@ This project include four main modules:
 - Video synthesis
 You give us an image folder. We will return a video of the most beautiful, most happy moments in your trip.
 
-## How to use it
+## Implement
 
 - Install requirements:
 ```
