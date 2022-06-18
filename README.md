@@ -25,7 +25,7 @@ You give us an image folder. We will return a video of the most beautiful, most 
 
 - Install requirements:
 ```
-
+pip install -r requirements.txt
 ```
 
 - Use this command:
