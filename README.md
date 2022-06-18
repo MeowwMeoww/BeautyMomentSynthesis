@@ -54,6 +54,30 @@ BeautyMomentSynthesis
 └── requirements.txt
 ```
 
+## Dataset needed structure :
+
+```bash
+BeautyMomentSynthesis
+├── Input folder
+│   ├── img_1.jpg
+│   ├── img_2.jpeg
+│   ├── img_3.JPG
+│   ......
+│
+├── Anchor folder
+│   ├── People 1
+│        ├── img_1.jpg
+│        ├── img_2.jpg
+│        ├── img_3.jpg
+│        ...........
+│   ├── People 2
+│        ├── img_1.jpg
+│        ├── img_2.jpg
+│        ├── img_3.jpg
+│        .........
+│     ........
+```
+
 ## Implement
 
 - Install requirements:
