@@ -26,27 +26,26 @@ You give us an image folder. We will return a video of the most beautiful, most 
 BeautyMomentSynthesis
 ├── SmileScore
 │   └── smileScore.py
-|   |   
 ├── animations
-|   ├── animations.py
+│   ├── animations.py
 │   └── make_video.py
 ├── face_reg
 │   ├── detection.py  
 │   └── read_video.py
 ├── flaskapp
-|   ├── static
-|   ├── templates
-|   |   ├── index.html
-|   ├── Beauty_Moment_Synthesis_API.ipynb // Python notebook for deploying the API in Google Colaboratory
-|   ├── app.py
-|   └── requirements.txt
+│   ├── static
+│   ├── templates
+│   │   ├── index.html
+│   ├── Beauty_Moment_Synthesis_API.ipynb // Python notebook for deploying the API in Google Colaboratory
+│   ├── app.py
+│   └── requirements.txt
 ├── misc
-|   ├── extract_bbox.py
-|   ├── log.py
-|   ├── utils.py
-|   └── visualize.py
+│   ├── extract_bbox.py
+│   ├── log.py
+│   ├── utils.py
+│   └── visualize.py
 ├── model
-|   └── model.py
+│   └── model.py
 ├── README.md
 ├── config.py
 ├── SDD-FIQA.py
@@ -66,5 +65,3 @@ pip install -r requirements.txt
 ```
 python main.py --anchor_dataset_path "path_to_anchor" --original_dataset_path "path_to_dataset" --output_path "path_to_output_vid.mp4" --auto_vid_params True --find_person "person_name1 person_name2" --number_of_images --log --visualization 
 ```
-
-
