@@ -403,8 +403,7 @@ def cropping_face(img_list, box_clipping, landmarks, purpose):
         target_img = alignment_procedure(target_img, facial_landmark)
 
         while (target_img.shape[-3]) < 100 or (target_img.shape[-2]) < 100:
-            target_img = cv2.resize(target_img, None, fx=1.25, fy=1.25,
-                                    interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
+            target_img = cv2.resize(target_img, None, fx=1.25, fy=1.25, interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return target_img
 
