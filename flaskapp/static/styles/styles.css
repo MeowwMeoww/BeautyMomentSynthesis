@@ -1,0 +1,110 @@
+/* General style */
+body,
+  h1,p {
+    font-family: "Raleway", sans-serif
+  }
+
+  h2 {
+    font-size: 2.5vw;
+    font-family: "Raleway", sans-serif
+  }
+
+  body,
+  html {
+    height: 100%
+  }
+
+  body {
+    background-image: url('/static/1510512877961.gif');
+    min-height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: 100% 100%;
+    
+  }
+
+  @media screen and (max-device-width: 500px) {
+
+}
+
+
+/* Inpur Style */
+  #container {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .formmm {
+    /* background-image: url('/static/680914.jpg'); */
+    height: 100%;
+    width: 50vw;
+    height: fit-content;
+    background-repeat: no-repeat;
+    background-size:100% 100%;
+    background-color: beige;
+    margin: auto;
+    transition: transform .2s;
+    border-radius: 20px;
+    padding: 1%;
+    text-align: left;
+    /* float: left; */
+    /* margin: 0; */
+  }
+
+  .formmm:hover {
+    transform: scale(1.10);
+  }
+
+  .formmm form {
+    /* padding-top: 10%; */
+    padding-left: 5%;
+    font-size: 1.5vw;
+  }
+  .formmm input {
+    transition: transform .2s;
+  }
+ 
+  .formmm input:hover {
+    transform: scale(1.);
+  }
+
+  div #loading{
+    width: 20vw;
+    height: 20vw;
+    display: none;
+    /* background-color: blueviolet; */
+    /* background: url('/static/loading_giphy.gif') no-repeat; */
+    background: url('https://i.gifer.com/XOsX.gif') no-repeat;
+    background-size: contain;
+    cursor: wait;
+    margin: auto;
+    /* box-sizing: border-box; */
+    }
+
+/* Result style */
+
+  .inresult {
+    margin: auto;
+    width: 50vw;
+    height: 60vh;
+    margin-top: 20vh;
+    /* background-image: url('/static/rain.jpeg'); */
+    background-color: beige;
+    /* background-image: linear-gradient(315deg, #9fa4c4 0%, #9e768f 74%); */
+    background-repeat: no-repeat;
+    margin-bottom: 5%;
+    border-radius: 20px;
+    transition: transform .2s;
+  }
+
+  .inresult:hover {
+    transform: scale(1.15);
+  }
+
+  .inresult h2, .inresult h3 {
+    color: black;
+  }

@@ -1,0 +1,4 @@
+facenet-pytorch
+easydict
+tabulate
+deepface
