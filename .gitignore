@@ -2,3 +2,5 @@
 *.h5
 *.pth
 .idea
+*.pem
+env
