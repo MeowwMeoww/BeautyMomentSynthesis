@@ -5,6 +5,7 @@ A project aims to retain all the beautiful pictures of you and your love ones by
 * [Team members](#team-members)
 * [General info](#general-info)
 * [Implement](#implement)
+* [Setup](#setup)
 
 ## Team members
 - Tran Cong Thinh
@@ -19,7 +20,8 @@ This project include four main modules:
 - Smile evaluation
 - Video synthesis
 
-Input: an input image folder + an anchor image folder. Output: a video comprised of the most beautiful, happy moments in the input image folder.
+Input: an input image folder + an anchor image folder. 
+Output: a video comprised of the most beautiful, happy moments in the input image folder.
 Link to our [presentation](https://drive.google.com/file/d/1ARZQUff1AB6bCPEb5_SQjpTgRus900VR/view?usp=sharing).
 
 ## Code structure
@@ -90,3 +92,4 @@ pip install -r requirements.txt
 ```
 python main.py --anchor_dataset_path "path_to_anchor" --original_dataset_path "path_to_dataset" --output_path "path_to_output_vid.mp4" --auto_vid_params True --find_person "person_name1 person_name2" --number_of_images --log --visualization 
 ```
+

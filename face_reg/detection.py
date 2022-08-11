@@ -310,12 +310,11 @@ def cropping_face(img_list, box_clipping, landmarks, purpose):
         y_bot_new = y_bot + CFG_REG.CROP.EXTEND_RATE * abs(y_bot - y_top)
 
         target_img = img[int(y_top_new): int(y_bot_new), int(x_left_new): int(x_right_new)]
-
         target_img = np.array(target_img).astype('int16')
         target_img = alignment_procedure(target_img, facial_landmark)
 
         while (target_img.shape[-3]) < 100 or (target_img.shape[-2]) < 100:
-            target_img = cv2.resize(target_img, None, fx=1.25, fy=1.25, interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
+            target_img = cv2.resize(target_img, None, fx = 1.25, fy = 1.25, interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return target_img
 
@@ -323,14 +322,12 @@ def cropping_face(img_list, box_clipping, landmarks, purpose):
         cropped_faces = []
         for img_index in range(len(img_list)):
             if len(box_clipping[img_index]) >= 1:
-                img_list_map = np.expand_dims(img_list[img_index], axis=0)
-                img_list_map = np.repeat(img_list_map, repeats=len(box_clipping[img_index]), axis=0)
-                cropped_faces.append(
-                    list(map(crop_with_percent, img_list_map, box_clipping[img_index], landmarks[img_index])))
+                img_list_map = np.expand_dims(img_list[img_index], axis = 0)
+                img_list_map = np.repeat(img_list_map, repeats = len(box_clipping[img_index]), axis = 0)
+                cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[img_index], landmarks[img_index])))
 
     elif purpose == 'anchor':
-        cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], landmarks[img_index][0]) for
-                         img_index in range(len(img_list))]
+        cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], landmarks[img_index][0]) for img_index in range(len(img_list))]
 
     return cropped_faces
 
