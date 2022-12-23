@@ -521,12 +521,11 @@ class recognition:
         y_bot_new = y_bot + CFG_REG.CROP.EXTEND_RATE * abs(y_bot - y_top)
 
         target_img = img[int(y_top_new): int(y_bot_new), int(x_left_new): int(x_right_new)]
-
         target_img = np.array(target_img).astype('int16')
         target_img = alignment_procedure(target_img, facial_landmark)
 
         while (target_img.shape[-3]) < 100 or (target_img.shape[-2]) < 100:
-            target_img = cv2.resize(target_img, None, fx=1.25, fy=1.25, interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
+            target_img = cv2.resize(target_img, None, fx = 1.25, fy = 1.25, interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return target_img
 
