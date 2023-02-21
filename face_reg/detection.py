@@ -50,7 +50,6 @@ class KNN:
 
         return vector_embeddings
 
-
     def names_to_integers(list_name):
         unique_names = np.unique(list_name)
 
@@ -60,25 +59,22 @@ class KNN:
         mapped_name = np.array([label_to_int[name] for name in list_name]).astype('int16')
         return int_to_label, mapped_name
 
-
     def euclidean_distance(row1, row2):
         euclidean_dist = norm(row1 - row2[:-1])
 
         return (euclidean_dist, int(row2[-1]))
 
-
     def cosine_distance(row1, row2):
         return dot(row1, row2) / (norm(row1) * norm(row2))
 
-
-# Locate the most similar neighbors
+    # Locate the most similar neighbors
     def get_neighbors(train, test_row, num_neighbors):
         test_rows = np.array([test_row] * len(train))
         euclidean_distances = list(map(euclidean_distance, test_rows, train))
         euclidean_distance_index = euclidean_distances.copy()
         euclidean_distance_index = sorted(range(len(euclidean_distance_index)),
-                                      key = lambda tup: euclidean_distance_index[tup])
-        euclidean_distances.sort(key = lambda tup: tup[0])
+                                          key=lambda tup: euclidean_distance_index[tup])
+        euclidean_distances.sort(key=lambda tup: tup[0])
         neighbors = list()
         cosine_scores = list()
 
@@ -94,14 +90,13 @@ class KNN:
 
         return neighbors, cosine_scores
 
-
-# Make a prediction with neighbors
+    # Make a prediction with neighbors
     def classification(mapping, train, test_row, num_neighbors):
         neighbors, cosine_scores = get_neighbors(train, test_row, num_neighbors)
         output_values = [row for row in neighbors if row is not None]
 
         if output_values:
-            prediction = max(set(output_values), key = output_values.count)
+            prediction = max(set(output_values), key=output_values.count)
             prediction_index = [index for index in range(len(output_values)) if output_values[index] == prediction]
             cosine_score = max([cosine_scores[index] for index in prediction_index])
             prediction = mapping[prediction]
@@ -111,8 +106,7 @@ class KNN:
 
         return [prediction], [cosine_score]
 
-
-# KNN Algorithm
+    # KNN Algorithm
     def k_nearest_neighbors(label, train, test, num_neighbors):
         int_to_label, anchor_mapped_label = names_to_integers(label)
 
@@ -133,14 +127,13 @@ class KNN:
 
         return predictions, cosine_prediction
 
-
     def knn_prediction(anchor_label, anchor_embed, input_embed):
         predicted_ids, predicted_scores = map(list, zip(*[k_nearest_neighbors(anchor_label, anchor_embed, embed,
-                                                                            CFG_REG.KNN.NUM_NEIGHBORS) for embed in input_embed]))
+                                                                              CFG_REG.KNN.NUM_NEIGHBORS) for embed in
+                                                          input_embed]))
         # list comprehension returns multiple lists
 
         return predicted_ids, predicted_scores
-
 
     def indices(sequence, values):
         matched_index = []
@@ -149,7 +142,6 @@ class KNN:
             matched_index.append(match_list)
 
         return matched_index
-
 
     def check_duplicates_ids(ids_list, scores_list, bbox_list):
         check = [ids[0] for ids in ids_list]
@@ -178,8 +170,7 @@ class KNN:
 
         return cleared_bbox, cleared_scores, cleared_ids
 
-
-    def clear_results(images, scores, img_names, boxes, ids, paths, person = None):
+    def clear_results(images, scores, img_names, boxes, ids, paths, person=None):
         keep_img = list()
 
         if person:
@@ -208,16 +199,17 @@ class KNN:
         new_ids = list(filter(None, ids))
 
         if new_scores:
-            new_boxes, new_scores, new_ids = map(list, (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
+            new_boxes, new_scores, new_ids = map(list,
+                                                 (zip(*map(check_duplicates_ids, new_ids, new_scores, new_boxes))))
 
         images = [images[img_index] for img_index in keep_img]
         paths = [paths[path_index] for path_index in keep_img]
 
-        df_new = pd.DataFrame({'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores, 'paths': paths})
-        df_new = df_new.reset_index(drop = True)
+        df_new = pd.DataFrame(
+            {'filename': new_names, 'bboxes': new_boxes, 'ids': new_ids, 'face scores': new_scores, 'paths': paths})
+        df_new = df_new.reset_index(drop=True)
 
         return df_new, images
-
 
 
 def read_image_from_path(path):
@@ -229,20 +221,20 @@ def read_image_from_path(path):
 def padding_image(img, max_width, max_height):
     top = bottom = (max_height - img.shape[-3]) // 2
     left = right = (max_width - img.shape[-2]) // 2
-    img = cv2.copyMakeBorder(img, top, bottom, left, right, borderType = cv2.BORDER_CONSTANT, value = [255, 255, 255])
+    img = cv2.copyMakeBorder(img, top, bottom, left, right, borderType=cv2.BORDER_CONSTANT, value=[255, 255, 255])
     img = cv2.resize(img, (max_width, max_height))  # cv2.resize(width, height)
 
     return img
 
 
-def resize_images(img_list, purpose, fraction = config.RESIZE_RATE):
+def resize_images(img_list, purpose, fraction=config.RESIZE_RATE):
     if purpose == 'anchor':
         max_width = max([img_list[i].shape[-2] for i in range(len(img_list))])
         max_height = max([img_list[i].shape[-3] for i in range(len(img_list))])
         len_lst = len(img_list)
 
         img_list = list(map(padding_image, img_list, [max_width] * len_lst, [max_height] * len_lst))
-        img_list = np.stack(img_list, axis = 0)
+        img_list = np.stack(img_list, axis=0)
 
     elif purpose == 'input':
         all_width = [img_list[i].shape[-2] for i in range(len(img_list))]
@@ -250,12 +242,12 @@ def resize_images(img_list, purpose, fraction = config.RESIZE_RATE):
         all_height = [img_list[i].shape[-3] for i in range(len(img_list))]
         mean_height = int(sum(all_height) / len(all_height) * fraction)
 
-        img_list = np.stack([cv2.resize(img_list[i], (mean_width, mean_height)) for i in range(len(img_list))], axis = 0)
+        img_list = np.stack([cv2.resize(img_list[i], (mean_width, mean_height)) for i in range(len(img_list))], axis=0)
 
     return img_list
 
 
-def return_paths(root, purpose, batch_size = config.BATCH_SIZE):
+def return_paths(root, purpose, batch_size=config.BATCH_SIZE):
     paths = [join(path, name) for path, _, files in os.walk(root) for name in files if os.path.isfile(join(path, name))]
 
     if purpose == 'input':
@@ -275,11 +267,11 @@ def read_images(paths, purpose):
     shape_check = all(img_list[index].shape == img_list[0].shape for index in range(len(img_list)))
 
     if shape_check:
-      img_list = np.array(img_list)
-      img_resized_list = img_list.copy()
+        img_list = np.array(img_list)
+        img_resized_list = img_list.copy()
 
     else:
-      img_resized_list = resize_images(img_list, purpose)  # img_list o dang list
+        img_resized_list = resize_images(img_list, purpose)  # img_list o dang list
 
     return img_list, img_resized_list, shape_check
 
@@ -291,7 +283,6 @@ class recognition:
         self.bounding_boxes = []
         self.landmarks = []
         self.bounding_boxes_prob = []
-
 
     def create_facenet_models(self):
         """
@@ -314,19 +305,18 @@ class recognition:
         >> model_A.min_face_size = 10
         """
 
-    device = config.DEVICE
-    infer_model = InceptionResnetV1(pretrained = 'vggface2', device = device).eval()
+        device = config.DEVICE
+        infer_model = InceptionResnetV1(pretrained='vggface2', device=device).eval()
 
-    mtcnn = MTCNN(
-        image_size = 160, margin = 0, min_face_size = 75,
-        thresholds = [0.7, 0.7, 0.8], post_process = False,
-        device = device, selection_method = 'largest_over_threshold'
-    )
+        mtcnn = MTCNN(
+            image_size=160, margin=0, min_face_size=75,
+            thresholds=[0.7, 0.7, 0.8], post_process=False,
+            device=device, selection_method='largest_over_threshold'
+        )
 
-    return mtcnn, infer_model
+        return mtcnn, infer_model
 
-
-    def get_bounding_box(self, mtcnn_model, frames, batch_size = 32):
+    def get_bounding_box(self, mtcnn_model, frames, batch_size=32):
         """
         This function detects human faces in the given batch of images / video frames
         in the Python Numpy Array format. It will return 3 lists - bounding box coordinates
@@ -391,7 +381,7 @@ class recognition:
 
         for batch_file in frames:
             with torch.no_grad():
-                bb_frames, box_probs, landmark = mtcnn_model.detect(batch_file, landmarks = True)
+                bb_frames, box_probs, landmark = mtcnn_model.detect(batch_file, landmarks=True)
 
             for ind in range(len(bb_frames)):
                 if bb_frames[ind] is not None:
@@ -404,13 +394,11 @@ class recognition:
                     box_probs_list.append([None])
                     landmark_list.append([None])
 
-    return bboxes_pred_list, box_probs_list, landmark_list
-
+        return bboxes_pred_list, box_probs_list, landmark_list
 
     def fixed_image_standardization(image_tensor):
         processed_tensor = (image_tensor - 127.5) / 128.0
         return processed_tensor
-
 
     def transform(img):
         normalized = transforms.Compose([
@@ -418,7 +406,6 @@ class recognition:
             fixed_image_standardization
         ])
         return normalized(img)
-
 
     def filter_images(name, img_list, boxes, paths, landmarks):
         keep_index = [index for index, box in enumerate(boxes) if box[0] != [None]]
@@ -431,9 +418,8 @@ class recognition:
 
         return np.array(img_final), box_list_final, name_final, paths_final, landmarks_final
 
-
     def clipping_boxes(img_list, boxes):
-        def clipping_method(img, box, format = 'opencv'):
+        def clipping_method(img, box, format='opencv'):
             if format == 'opencv':
                 x_left, y_top, x_right, y_bot = int(box[0]), int(box[1]), int(box[2]), int(box[3])
 
@@ -469,14 +455,13 @@ class recognition:
         for img_index in range(len(img_list)):
 
             if len(boxes[img_index]) >= 1 and boxes[img_index][0] is not None:
-                img_list_map = np.expand_dims(img_list[img_index], axis = 0)
-                img_list_map = np.repeat(img_list_map, repeats = len(boxes[img_index]), axis = 0)
+                img_list_map = np.expand_dims(img_list[img_index], axis=0)
+                img_list_map = np.repeat(img_list_map, repeats=len(boxes[img_index]), axis=0)
                 box_clipping.append(list(map(clipping_method, img_list_map, boxes[img_index])))
             else:
                 box_clipping.append([[None]])
 
         return box_clipping
-
 
     def alignment_procedure(img, landmark):
         left_eye = landmark[0]
@@ -507,10 +492,9 @@ class recognition:
                 angle = (90 - angle)
 
             img = Image.fromarray(img.astype(np.uint8))
-            img = np.array(img.rotate(direction * angle, resample = Image.BICUBIC)).astype('int16')
+            img = np.array(img.rotate(direction * angle, resample=Image.BICUBIC)).astype('int16')
 
         return img
-
 
     def crop_with_percent(img, box, facial_landmark):
         x_left, y_top, x_right, y_bot = box[0], box[1], box[2], box[3]  # [x_left, y_top, x_right, y_bot]
@@ -525,7 +509,8 @@ class recognition:
         target_img = alignment_procedure(target_img, facial_landmark)
 
         while (target_img.shape[-3]) < 100 or (target_img.shape[-2]) < 100:
-            target_img = cv2.resize(target_img, None, fx = 1.25, fy = 1.25, interpolation = cv2.INTER_CUBIC)  # cv2 resize (height, width)
+            target_img = cv2.resize(target_img, None, fx=1.25, fy=1.25,
+                                    interpolation=cv2.INTER_CUBIC)  # cv2 resize (height, width)
 
         return target_img
 
@@ -536,14 +521,15 @@ class recognition:
                 if len(box_clipping[img_index]) >= 1:
                     img_list_map = np.expand_dims(img_list[img_index], axis=0)
                     img_list_map = np.repeat(img_list_map, repeats=len(box_clipping[img_index]), axis=0)
-                    cropped_faces.append(list(map(crop_with_percent, img_list_map, box_clipping[img_index], landmarks[img_index])))
+                    cropped_faces.append(
+                        list(map(crop_with_percent, img_list_map, box_clipping[img_index], landmarks[img_index])))
 
         elif purpose == 'anchor':
-            cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], landmarks[img_index][0]) for
-                            img_index in range(len(img_list))]
+            cropped_faces = [crop_with_percent(img_list[img_index], box_clipping[img_index][0], landmarks[img_index][0])
+                             for
+                             img_index in range(len(img_list))]
 
         return cropped_faces
-
 
     def face_recognition(self, input_paths, input_names, anchor_paths, anchor_labels, finding_name):
         """
@@ -569,8 +555,8 @@ class recognition:
         """
         torch.cuda.empty_cache()
 
-        input_img, input_img_resized, input_shape_flag = read_images(input_paths, purpose = 'input')
-        _, anchor_img, _ = read_images(anchor_paths, purpose = 'anchor')
+        input_img, input_img_resized, input_shape_flag = read_images(input_paths, purpose='input')
+        _, anchor_img, _ = read_images(anchor_paths, purpose='anchor')
 
         input_boxes, _, input_landmarks = get_bounding_box(self.mtcnn, input_img_resized, CFG_REG.BATCH_SIZE)
         anchor_boxes, _, anchor_landmarks = get_bounding_box(self.mtcnn, anchor_img, CFG_REG.BATCH_SIZE)
@@ -582,8 +568,13 @@ class recognition:
             input_boxes = rescale_bboxes(input_boxes, input_img_resized, input_img)
         del input_img_resized
 
-        input_img, input_boxes, input_names, input_paths, input_landmarks = filter_images(input_names, input_img, input_boxes, input_paths, input_landmarks)
-        anchor_img, anchor_boxes, anchor_label, anchor_paths, anchor_landmarks = filter_images(anchor_labels, anchor_img, anchor_boxes, anchor_paths, anchor_landmarks)
+        input_img, input_boxes, input_names, input_paths, input_landmarks = filter_images(input_names, input_img,
+                                                                                          input_boxes, input_paths,
+                                                                                          input_landmarks)
+        anchor_img, anchor_boxes, anchor_label, anchor_paths, anchor_landmarks = filter_images(anchor_labels,
+                                                                                               anchor_img, anchor_boxes,
+                                                                                               anchor_paths,
+                                                                                               anchor_landmarks)
 
         if input_paths:
             cropped_img_anchor = cropping_face(anchor_img, anchor_boxes, anchor_landmarks, 'anchor')
@@ -594,13 +585,13 @@ class recognition:
 
             final_ids, final_scores = knn_prediction(anchor_label, anchor_embed, input_embed)
 
-            df, input_img = clear_results(images = input_img, img_names = input_names, scores = final_scores,
-                                        boxes = input_boxes, ids = final_ids, paths = input_paths, person = finding_name)
+            df, input_img = clear_results(images=input_img, img_names=input_names, scores=final_scores,
+                                          boxes=input_boxes, ids=final_ids, paths=input_paths, person=finding_name)
 
         #    return df, input_img
 
         else:
-            df = pd.DataFrame(columns = ['filename', 'bboxes', 'ids', 'face scores', 'paths'])
+            df = pd.DataFrame(columns=['filename', 'bboxes', 'ids', 'face scores', 'paths'])
             input_img = []
 
         return df, input_img
